@@ -1,0 +1,35 @@
+-- Installed Libaries --
+
+- RFM95W LoraWan module
+
+Github Source: https://github.com/adafruit/TinyLoRa
+
+In the file TinyLoRa.h change the following to enable European Bands:
+
+Comment the following lines:
+
+	// #if !defined(EU863) && !defined(AU915) && !defined(AS920)
+	// #define US902 ///< Used in USA, Canada and South America
+	// #endif
+
+And replace it with the following line:
+
+	#define EU863 ///< Used in Europe
+
+
+- HX711 Load cell amplifier
+
+Github Source: https://github.com/bogde/HX711
+
+No changes needed
+
+- DTH711 Temperature and Humidity sensor
+
+GitHub Source: https://github.com/RobTillaart/DHTNEW
+
+No changes needed
+
+- NTC Temperature sensor
+
+No Libary needed
+
