@@ -2,34 +2,39 @@
 
 - RFM95W LoraWan module
 
-Github Source: https://github.com/adafruit/TinyLoRa
+	Github Source: https://github.com/adafruit/TinyLoRa
+	In the file TinyLoRa.h change the following to enable European Bands:
 
-In the file TinyLoRa.h change the following to enable European Bands:
+	Comment the following lines:
 
-Comment the following lines:
+		// #if !defined(EU863) && !defined(AU915) && !defined(AS920)
+		// #define US902 ///< Used in USA, Canada and South America
+		// #endif
 
-	// #if !defined(EU863) && !defined(AU915) && !defined(AS920)
-	// #define US902 ///< Used in USA, Canada and South America
-	// #endif
+	And replace it with the following line:
 
-And replace it with the following line:
-
-	#define EU863 ///< Used in Europe
-
+		#define EU863 ///< Used in Europe
 
 - HX711 Load cell amplifier
 
 Github Source: https://github.com/bogde/HX711
+In HX711.cpp remove the line
 
-No changes needed
+	uint8_t data[3] = { 0 };
+
+In HX711.h add the following line after public
+
 
 - DTH711 Temperature and Humidity sensor
 
-GitHub Source: https://github.com/RobTillaart/DHTNEW
+	GitHub Source: https://github.com/RobTillaart/DHTNEW
+	In dhtnew.h comment out the line:
+
+		private:
 
 No changes needed
 
 - NTC Temperature sensor
 
-No Libary needed
+	No Libary needed
 
