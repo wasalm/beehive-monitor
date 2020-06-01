@@ -1,6 +1,6 @@
 Lora Data format:
 
-Each message consists of 10 bytes
+Each message consists of 9 bytes
 
 Message byte | Description | Device
 -----------------------------------
@@ -8,14 +8,14 @@ Message byte | Description | Device
       1      |    byte 1   | DHT11
       2      |    byte 2   | DHT11
       3      |    byte 3   | DHT11
-      4      |    byte 4   | DHT11
+   (ignore)  |    byte 4   | DHT11
 -----------------------------------
-      5      |    byte 0   | HX711
-      6      |    byte 1   | HX711
-      7      |    byte 2   | HX711
+      4      |    byte 0   | HX711
+      5      |    byte 1   | HX711
+      6      |    byte 2   | HX711
 -----------------------------------
-      8      |    byte 0   |  NTC
-      9      |    byte 1   |  NTC
+      7      |    byte 0   |  NTC
+      8      |    byte 1   |  NTC
 
 All devices sends integers as least significant bytes.
 That is, when sending the number 1020 (3FC in HEX)

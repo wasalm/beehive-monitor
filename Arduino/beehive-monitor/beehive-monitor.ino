@@ -46,7 +46,7 @@ uint8_t DevAddr[4] = { 0x26, 0x01, 0x18, 0x24 };
 /*
    Variables
 */
-uint8_t message[10];
+uint8_t message[9];
 unsigned long lastSend = -1000;
 
 TinyLoRa lora = TinyLoRa(RFM95W_PIN_DIO0, RFM95W_PIN_NSS, RFM95W_PIN_RST);
@@ -121,21 +121,21 @@ void loop()
     /*
        DHT11
     */
-    dht11.read();
-    message[0] = dht11._bits[0];
-    message[1] = dht11._bits[1];
-    message[2] = dht11._bits[2];
-    message[3] = dht11._bits[3];
-    message[4] = dht11._bits[4];
+    if(dht11.read() == DHTLIB_OK) {
+      message[0] = dht11._bits[0];
+      message[1] = dht11._bits[1];
+      message[2] = dht11._bits[2];
+      message[3] = dht11._bits[3];
+    }
 
     /*
        HX711
     */
     if (scale.is_ready()) {
       scale.read();
-      message[5] = scale.data[0];
-      message[6] = scale.data[1];
-      message[7] = scale.data[2];
+      message[4] = scale.data[0];
+      message[5] = scale.data[1];
+      message[6] = scale.data[2];
     }
 
     /*
@@ -146,8 +146,8 @@ void loop()
     char *b = (char *)&t_i;
     uint8_t b0 = *(b + 0); // = 87
     uint8_t b1 = *(b + 1); // = 173
-    message[8] = b0;
-    message[9] = b1;
+    message[7] = b0;
+    message[8] = b1;
 
     /*
        Lora
