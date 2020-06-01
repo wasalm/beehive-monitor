@@ -15,6 +15,20 @@
 
 		#define EU863 ///< Used in Europe
 
+	Install the following Library in Arduino
+
+		https://github.com/mcci-catena/arduino-lmic
+
+	In arduino-lmic/project_config/lmic_project_config.h
+	Comment out
+
+		#define CFG_us915 1
+
+	Uncomment
+
+		#define CFG_eu868 1
+	
+
 - HX711 Load cell amplifier
 
 Github Source: https://github.com/bogde/HX711
