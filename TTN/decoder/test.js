@@ -47,7 +47,7 @@ function Decoder(bytes, port) {
 
 function Converter(decoded, port) {
   var scale = {
-  	tare: 112000,
+  	tare: 112431,
   	oneKg: -20000
   };
 
@@ -72,7 +72,17 @@ function Converter(decoded, port) {
   }
 
   if(typeof decoded.w != "undefined") {
-  	converted.w = ((decoded.w - scale.tare) % (256*256*256))/scale.oneKg; //TODO
+    var weight = decoded.w - scale.tare; // Remove zero offset
+    weight = weight % (256*256*256); // Values are 24 bit
+
+    if(weight < 0) {
+      weight += 256*256*256; // make range between 0 and 256*256*256
+    }
+
+    if(weight >= 128*256*256) { // Assume that if value is too large it is actually negative
+      weight -= 256*256*256; 
+    }
+    converted.w = weight/scale.oneKg;
   }
 
   if(typeof decoded.t_i != "undefined") {

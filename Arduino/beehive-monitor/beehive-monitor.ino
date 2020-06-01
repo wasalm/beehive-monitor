@@ -10,7 +10,8 @@
 /*
    Constants
 */
-#define RFM95W_PIN_DIO0 A1
+#define RFM95W_PIN_DIO0 5
+#define RFM95W_PIN_DIO1 6
 #define RFM95W_PIN_NSS 10
 #define RFM95W_PIN_RST A0
 
@@ -47,7 +48,7 @@ uint8_t DevAddr[4] = { 0x26, 0x01, 0x18, 0x24 };
    Variables
 */
 uint8_t message[9];
-unsigned long lastSend = -1000;
+unsigned long lastSend = 0;
 
 TinyLoRa lora = TinyLoRa(RFM95W_PIN_DIO0, RFM95W_PIN_NSS, RFM95W_PIN_RST);
 DHTNEW dht11(DHT11_PIN_DAT);
@@ -113,6 +114,7 @@ void setup()
 
 void loop()
 {
+  Serial.println(millis() - lastSend);
   if (millis() - lastSend > sendInterval ) {
     lastSend = millis();
 
