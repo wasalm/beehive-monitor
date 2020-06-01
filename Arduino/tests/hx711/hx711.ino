@@ -50,20 +50,7 @@ void loop()
     }
 
 
-    //    uint32_t t_i = analogRead(NTC_PIN_DATA);
-    //
-    //    t_i = 1020;
-    //
-    //    char *b = (char *)&t_i;
-    //    uint8_t b2 = *(b+0); // = 87
-    //    uint8_t b3 = *(b+1); // = 173
-    //
-    //    Serial.print(t_i, DEC);
-    //    Serial.print("\t");
-    //    Serial.print(b2, HEX);
-    //    Serial.print("\t");
-    //    Serial.print(b3, HEX);
-    //    Serial.print("\n");
+    //Data is LSB
   }
 }
 
