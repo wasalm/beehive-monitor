@@ -62,7 +62,7 @@ void setupRFM95W() {
   // define multi-channel sending
   lora.setChannel(MULTI);
   // set datarate
-  lora.setDatarate(SF7BW125);
+  lora.setDatarate(SF12BW125);
   if (!lora.begin())
   {
     Serial.println("Lora Failed");
