@@ -26,8 +26,11 @@ let converted = [];
 for(let i=0; i<decoded.length; i++) {
 	if(typeof decoded[i].t != "undefined" && typeof decoded[i].t_i != "undefined") {
 		converted.push({
-			y: 1/(273.15 + decoded[i].t),
-			x: Math.log(decoded[i].t_i/ (1024 - decoded[i].t_i))
+			// t: decoded[i].t,
+			// f: 1/(273.15 + decoded[i].t),
+			// w: decoded[i].w_v
+			y: decoded[i].w_v,
+			x: decoded[i].t
 		});
 	}
 }
@@ -72,18 +75,28 @@ for(let i=0; i<converted.length; i++) {
 	xy += converted[i].x * converted[i].y;
 }
 
-let B = ((xy/x) - (y/n))/ ((x2/x)-(x/n));
-let A = (y/n) - (x/n) * B;
+console.log(decoded);
+console.log(converted);
+console.log("n: " + n + " x: " + x + " y: " + y + " x2: " + x2 + " xy: " + xy);
+
+console.log("No temperature adjustment:")
+let B = 0;
+let A = (y/n);
 let E = 0;
 
 for(let i=0; i<converted.length; i++) {
 	E += (converted[i].y - A - B * converted[i].x) * (converted[i].y - A - B * converted[i].x);
 }
+console.log("A: " + A + " B: " + B + " E: " + E + " sigma:" + Math.sqrt(E/(n-1)));
 
+console.log("with temperature adjustment:")
+B = ((xy/x) - (y/n))/ ((x2/x)-(x/n));
+A = (y/n) - (x/n) * B;
+E = 0;
 
-console.log(decoded);
-console.log(converted);
-console.log("n: " + n + " x: " + x + " y: " + y + " x2: " + x2 + " xy: " + xy);
+for(let i=0; i<converted.length; i++) {
+	E += (converted[i].y - A - B * converted[i].x) * (converted[i].y - A - B * converted[i].x);
+}
 console.log("A: " + A + " B: " + B + " E: " + E + " sigma:" + Math.sqrt(E/(n-1)));
 
 /*
@@ -103,7 +116,7 @@ function Decoder(bytes, port) {
 	}
 
 	if(bytes[4] != 0 || bytes[5] != 0 || bytes[6] != 0) {
-		decoded.w = (bytes[6] << 16) | (bytes[5] << 8) | bytes[4];
+		decoded.w_v = (bytes[6] << 16) | (bytes[5] << 8) | bytes[4];
 	}
 
 	if(bytes[7] != 0 || bytes[8] != 0 ) {
