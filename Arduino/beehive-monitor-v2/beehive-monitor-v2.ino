@@ -11,7 +11,7 @@
 /*
    Constants
 */
-#define DEBUG_MEASUREMENTS
+//#define DEBUG_MEASUREMENTS
 
 #define RFM95W_PIN_DIO0 5
 #define RFM95W_PIN_DIO1 6
@@ -34,7 +34,7 @@
 // We will send 1 message every 20 minutes, hence 3 messages per hour or 72 messages per day. Nice below the limit.
 // We need to do 265 measurements per 1200 seconds, i.e every ~4,5 second we need to take a measurement
 
-const unsigned long measureInterval = 4500; 
+const unsigned long measureInterval = 4500;
 const unsigned int numPowMeasures = 8; // 2^Pow measures
 const unsigned int saveCounterEEPROM = 10;
 
@@ -176,7 +176,7 @@ void setup()
   dht11.read();
 
   EEPROM.get(0, lora.frameCounter );
-  lora.frameCounter += saveCounterEEPROM;
+  lora.frameCounter += saveCounterEEPROM +1;
 
   if (lora.frameCounter == 65535) {
     //Framecounter is not set or is overflown. Hence reset to start
