@@ -1,0 +1,8 @@
+--- What data types do we need to use? ---
+
+256 measurements ~ +8 bits
+
+NTC:	10 bits 	-> unsigned long (32bit)
+DHT11:	16 bit 		-> double (64bit)
+		16 bit 		-> double (64bit)
+HX711: 	24 bit modulo

@@ -15,38 +15,13 @@
 
 		#define EU863 ///< Used in Europe
 
-	Install the following Library in Arduino
-
-		https://github.com/mcci-catena/arduino-lmic
-
-	In arduino-lmic/project_config/lmic_project_config.h
-	Comment out
-
-		#define CFG_us915 1
-
-	Uncomment
-
-		#define CFG_eu868 1
-	
-
 - HX711 Load cell amplifier
 
-Github Source: https://github.com/bogde/HX711
-In HX711.cpp remove the line
-
-	uint8_t data[3] = { 0 };
-
-In HX711.h add the following line after public
-
+	Github Source: https://github.com/bogde/HX711
 
 - DTH711 Temperature and Humidity sensor
 
 	GitHub Source: https://github.com/RobTillaart/DHTNEW
-	In dhtnew.h comment out the line:
-
-		private:
-
-No changes needed
 
 - NTC Temperature sensor
 
