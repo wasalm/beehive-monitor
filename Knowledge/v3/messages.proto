@@ -1,0 +1,168 @@
+syntax = "proto3";
+
+/*
+ * Communication between computer and arduino
+ * This is assuming computer act as master and arduino act as slave
+ */
+
+message Request { 
+    oneof type {
+        ConfigureRequest configureRequest = 1;
+        BME280Request bme280Request = 2;
+        HX711Request hx711Request = 3;
+        DS18B20Request dS18B20Request = 4;
+        SSD1315Request ssd1315Request = 5;
+    }
+
+    message ConfigureRequest {
+        repeated BME280Device bme8280device = 1;
+        repeated HX711Device hx711device = 2;
+        repeated DS18B20Device ds18B20Device = 3;
+        repeated SSD1315Device ssd1315Device = 4;
+
+        message BME280Device {
+            int32 id = 1;
+            
+            /*
+             *  This device uses i2c. Assuming default address
+             */
+        }
+
+        message HX711Device {
+            int32 id = 1;
+
+            int32 doutPin = 2;
+            int32 sckPin = 3;
+        }
+
+        message DS18B20Device {
+            int32 id = 1;
+            int32 pin = 2;
+        }
+
+        message SSD1315Device {
+            int32 id = 1;
+        
+            /*
+             *  This device uses i2c. Assuming default address
+             */
+        }
+    }
+
+    message BME280Request {
+        int32 device = 1;
+    }
+
+    message HX711Request {
+        int32 device = 1;
+    }
+
+    message DS18B20Request {
+        int32 device = 1;
+    }
+
+    message SSD1315Request {
+        int32 device = 1;
+        
+        oneof action {
+            ClearDisplay clearDisplay = 2;
+            DrawString drawstring = 3;
+            SetFont setFont = 4;
+        }
+
+        message ClearDisplay {
+        }
+
+        message SetFont {
+            Font font = 1;
+
+            enum Font {
+                u8x8_font_amstrad_cpc_extended_f = 0;
+                u8x8_font_5x7_f = 1;
+                u8x8_font_5x8_f = 2;
+                u8x8_font_8x13_1x2_f = 3;
+                u8x8_font_8x13B_1x2_f = 4;
+                u8x8_font_7x14_1x2_f = 5;
+                u8x8_font_7x14B_1x2_f = 6;
+                u8x8_font_open_iconic_arrow_1x1 = 7;
+                u8x8_font_open_iconic_check_1x1 = 8;
+                u8x8_font_open_iconic_embedded_1x1 = 9;
+                u8x8_font_open_iconic_play_1x1 = 10;
+                u8x8_font_open_iconic_thing_1x1 = 11;
+                u8x8_font_open_iconic_weather_1x1 = 12;
+                u8x8_font_open_iconic_arrow_2x2 = 13;
+                u8x8_font_open_iconic_check_2x2 = 14;
+                u8x8_font_open_iconic_embedded_2x2 = 15;
+                u8x8_font_open_iconic_play_2x2 = 16;
+                u8x8_font_open_iconic_thing_2x2 = 17;
+                u8x8_font_open_iconic_weather_2x2 = 18;
+                u8x8_font_open_iconic_arrow_4x4 = 19;
+                u8x8_font_open_iconic_check_4x4 = 20;
+                u8x8_font_open_iconic_embedded_4x4 = 21;
+                u8x8_font_open_iconic_play_4x4 = 22;
+                u8x8_font_open_iconic_thing_4x4 = 23;
+                u8x8_font_open_iconic_weather_4x4 = 24;
+                u8x8_font_open_iconic_arrow_8x8 = 25;
+                u8x8_font_open_iconic_check_8x8 = 26;
+                u8x8_font_open_iconic_embedded_8x8 = 27;
+                u8x8_font_open_iconic_play_8x8 = 28;
+                u8x8_font_open_iconic_thing_8x8 = 29;
+                u8x8_font_open_iconic_weather_8x8 = 30;
+                u8x8_font_profont29_2x3_f = 31;
+                u8x8_font_courB18_2x3_f = 32;
+                u8x8_font_courR18_2x3_f = 33;
+                u8x8_font_courB24_3x4_f = 34;
+                u8x8_font_courR24_3x4_f = 35;
+                u8x8_font_lucasarts_scumm_subtitle_o_2x2_f = 36;
+                u8x8_font_lucasarts_scumm_subtitle_r_2x2_f = 37;
+                u8x8_font_inr21_2x4_f = 38;
+                u8x8_font_inr33_3x6_f = 39;
+                u8x8_font_inr46_4x8_f = 40;
+                u8x8_font_inb21_2x4_f = 41;
+                u8x8_font_inb33_3x6_f = 42;
+                u8x8_font_inb46_4x8_f = 43;
+                u8x8_font_pressstart2p_f = 44;
+                u8x8_font_pcsenior_f = 45;
+                u8x8_font_pxplusibmcgathin_f = 46;
+                u8x8_font_pxplusibmcga_f = 47;
+                u8x8_font_pxplustandynewtv_f = 48;
+                u8x8_font_px437wyse700a_2x2_f = 49;
+                u8x8_font_px437wyse700b_2x2_f = 50;
+            }
+        }
+
+        message DrawString {
+            int32 x = 1;
+            int32 y = 2;
+            string text = 3;
+        }
+    }
+}
+
+
+message Response {
+    oneof type {
+        ErrorResponse errorResponse = 1;
+        BME280Response bme280Response = 2;
+        HX711Response hx711Response = 3;
+        DS18B20Response ds18B20Response = 4;
+    }
+
+    message ErrorResponse {
+        string text = 1;
+    }
+
+    message BME280Response {
+        int32 pressure = 1;
+        sint32 temperature = 2;
+        int32 humidity = 3;
+    }
+
+    message HX711Response {
+        double weight = 1;
+    }
+
+    message DS18B20Response {
+        sint32 temperature = 1;
+    }
+}

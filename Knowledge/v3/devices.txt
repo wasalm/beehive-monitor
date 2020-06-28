@@ -56,6 +56,8 @@ Devices and needed software:
         Address the device as follows:
 
             U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
+            U8X8_SSD1306_128X64_NONAME_HW_I2C([reset [, clock, data]])
+
  
  Using Arduino Protobufs:
     
