@@ -34,7 +34,7 @@
 // We will send 1 message every 20 minutes, hence 3 messages per hour or 72 messages per day. Nice below the limit.
 // We need to do 265 measurements per 1200 seconds, i.e every ~4,5 second we need to take a measurement
 
-const unsigned long measureInterval = 4500;
+const unsigned long measureInterval = 17500;
 const unsigned int numPowMeasures = 8; // 2^Pow measures
 const unsigned int saveCounterEEPROM = 10;
 
@@ -55,7 +55,7 @@ uint8_t DevAddr[4] = { 0x26, 0x01, 0x1A, 0x74 };
    Variables
 */
 uint8_t message[9];
-unsigned long lastMeasure = - 2 * measureInterval;
+unsigned long lastMeasure = - 4 * measureInterval;
 
 TinyLoRa lora = TinyLoRa(RFM95W_PIN_DIO0, RFM95W_PIN_NSS, RFM95W_PIN_RST);
 DHTNEW dht11(DHT11_PIN_DAT);
@@ -126,7 +126,7 @@ void setupRFM95W() {
   // define multi-channel sending
   lora.setChannel(MULTI);
   // set datarate
-  lora.setDatarate(SF10BW125); //Choose right one for our situation
+  lora.setDatarate(SF12BW125); //Choose right one for our situation
   if (!lora.begin())
   {
     Serial.println("Lora Failed");
@@ -183,6 +183,9 @@ void setup()
     lora.frameCounter = 0;
     EEPROM.put(0, lora.frameCounter);
   }
+
+  lora.sendData(message, sizeof(message), lora.frameCounter);
+  lora.frameCounter++;
 }
 
 void loop()

@@ -19,8 +19,6 @@ void enableHX711() {
 void setup()
 {
   Serial.begin(115200);
-  Serial.println(__FILE__);
-  Serial.println();
 
   enableHX711();
   delay(500);
@@ -35,20 +33,10 @@ void loop()
     
     if (scale.is_ready()) {
       long reading = scale.read();
-      Serial.print("HX711 reading:\t");
-      Serial.print(reading);
-      Serial.print("\t");
-      Serial.print(scale.data[0], HEX);
-      Serial.print("\t");
-      Serial.print(scale.data[1], HEX);
-      Serial.print("\t");
-      Serial.print(scale.data[2], HEX);
-      Serial.print("\n");
-      
+      Serial.println(reading);
     } else {
       Serial.println("HX711 not found.");
     }
-
 
     //Data is LSB
   }

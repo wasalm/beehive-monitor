@@ -1,0 +1,48 @@
+--- Beehive Monitor v3 ---
+Devices and needed software:
+
+-- Main Motherboard
+
+    - Raspberry Pi 4 Model 2GB
+
+        Use distribution: Raspbian Lite
+        Use programming language: NodeJS
+
+        Using Libraries:
+
+            serialport 
+            parser-readline
+
+-- Main Connected Devices:
+
+    - Pi Supply IoT LoRa Node pHAT voor Raspberry Pi - 868MHz:
+
+        Based on RAK811 and can be managed using AT commands
+        For documentation see: https://doc.rakwireless.com/quick-start/rak811-lora-breakout-module/configuring-your-rak811-breakout-board
+
+    - Usb Audio Adapter
+
+        (TODO)
+
+    - Seeeduino Lotus V1.1 - ATMega328 Board met Grove Interface
+
+        Communicate with Raspberry Pi using Serial.
+        See https://medium.com/@machadogj/arduino-and-node-js-via-serial-port-bcf9691fab6a for more info.
+
+-- Grove Devices
+
+    - Temp & Humi & Barometer Sensor (BME280)
+
+        (TODO)
+
+    - HX711 Load Cell amplifier
+
+        (TODO)
+
+    - Grove compatible 1-wire temperature Sensor
+
+        (TODO)
+
+    - Seeed Studio Grove OLED Display 0.96 inch 128*64 pixels wit - SSD1315
+
+        (TODO)
