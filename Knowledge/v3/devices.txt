@@ -10,8 +10,9 @@ Devices and needed software:
 
         Using Libraries:
 
-            serialport 
-            parser-readline
+            https://serialport.io/
+            https://github.com/vincentsaluzzo/node-microphone
+            https://github.com/zszszsz/node-fftw
 
 -- Main Connected Devices:
 
@@ -22,7 +23,8 @@ Devices and needed software:
 
     - Usb Audio Adapter
 
-        (TODO)
+        Code needs alsa-utils to be installed (sudo apt-get install alsa-utils)
+        Also fftw from source (See node-fftw github page).
 
     - Seeeduino Lotus V1.1 - ATMega328 Board met Grove Interface
 
@@ -33,16 +35,28 @@ Devices and needed software:
 
     - Temp & Humi & Barometer Sensor (BME280)
 
-        (TODO)
+        Use the following Arduino Library:
+            https://github.com/sparkfun/SparkFun_BME280_Arduino_Library
 
     - HX711 Load Cell amplifier
 
-        (TODO)
+        Use the following Arduino Library:
+            https://github.com/bogde/HX711 
 
-    - Grove compatible 1-wire temperature Sensor
+    - Grove compatible 1-wire temperature Sensor (DS18B20)
 
-        (TODO)
+        Use the following Arduino Library:
+            https://github.com/matmunk/DS18B20
 
     - Seeed Studio Grove OLED Display 0.96 inch 128*64 pixels wit - SSD1315
 
-        (TODO)
+        Use the following Arduino Library:
+            https://github.com/olikraus/u8g2
+
+        Address the device as follows:
+
+            U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
+ 
+ Using Arduino Protobufs:
+    
+    See https://github.com/nanopb/nanopb
