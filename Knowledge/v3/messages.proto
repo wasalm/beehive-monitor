@@ -7,11 +7,15 @@ syntax = "proto3";
 
 message Request { 
     oneof type {
-        ConfigureRequest configureRequest = 1;
-        BME280Request bme280Request = 2;
-        HX711Request hx711Request = 3;
-        DS18B20Request dS18B20Request = 4;
-        SSD1315Request ssd1315Request = 5;
+        ResetRequest resetRequest = 1;
+        ConfigureRequest configureRequest = 2;
+        BME280Request bme280Request = 3;
+        HX711Request hx711Request = 4;
+        DS18B20Request dS18B20Request = 5;
+        SSD1315Request ssd1315Request = 6;
+    }
+
+    message ResetRequest {
     }
 
     message ConfigureRequest {
@@ -143,9 +147,13 @@ message Request {
 message Response {
     oneof type {
         ErrorResponse errorResponse = 1;
-        BME280Response bme280Response = 2;
-        HX711Response hx711Response = 3;
-        DS18B20Response ds18B20Response = 4;
+        ResetResponse resetResponse = 2;
+        BME280Response bme280Response = 3;
+        HX711Response hx711Response = 4;
+        DS18B20Response ds18B20Response = 5;
+    }
+
+    message ResetResponse {
     }
 
     message ErrorResponse {
