@@ -12,6 +12,16 @@ COBSStream cobs_in(Serial);
 COBSPrint cobs_out(Serial);
 pb_ostream_s pb_out = as_pb_ostream(cobs_out);
 
+bool encode_string(pb_ostream_t* stream, const pb_field_t* field, void* const* arg)
+{
+    const char* str = (const char*)(*arg);
+
+    if (!pb_encode_tag_for_field(stream, field))
+        return false;
+
+    return pb_encode_string(stream, (uint8_t*)str, strlen(str));
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -50,7 +60,6 @@ void loop()
 
   Request request = Request_init_zero;
   Response response = Response_init_default;
-  response.which_type = Response_errorResponse_tag; // Default we want an error message
 
   pb_istream_t pb_in = pb_istream_from_buffer(buffer, n);
   bool status = pb_decode(&pb_in, Request_fields, &request);
@@ -58,10 +67,9 @@ void loop()
   /* Check for errors... */
   if (!status)
   {
-    // cobs_out.println(PB_GET_ERROR(&pb_in));
-    // cobs_out.end();
-
-    //TODO ERROR STRING
+    response.which_type = Response_errorResponse_tag; // Default we want an error message
+    response.type.errorResponse.text.arg = (void*) PB_GET_ERROR(&pb_in);
+    response.type.errorResponse.text.funcs.encode = &encode_string;
   }
   else
   {
@@ -75,7 +83,11 @@ void loop()
       break;
 
     default:
-      //TODO ERROR STRING
+      response.which_type = Response_errorResponse_tag; // Default we want an error message
+      const char * msg = "Undefined action";
+
+      response.type.errorResponse.text.arg = (void*) msg;
+      response.type.errorResponse.text.funcs.encode = &encode_string;
       break;
     }
 
