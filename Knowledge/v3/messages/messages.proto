@@ -1,5 +1,4 @@
 syntax = "proto3";
-
 /*
  * Communication between computer and arduino
  * This is assuming computer act as master and arduino act as slave

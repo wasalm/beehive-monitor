@@ -62,3 +62,6 @@ Devices and needed software:
  Using Arduino Protobufs:
     
     See https://github.com/nanopb/nanopb
+
+    pbjs messages.proto --es5 messages.js
+    ./nanopb_generator ~/Development/Git/Thuis/beehive-monitor/Knowledge/v3/messages/messages.proto -D ~/Development/Git/Thuis/beehive-monitor/Knowledge/v3/messages/ -I ~/Development/Git/Thuis/beehive-monitor/Knowledge/v3/messages/
