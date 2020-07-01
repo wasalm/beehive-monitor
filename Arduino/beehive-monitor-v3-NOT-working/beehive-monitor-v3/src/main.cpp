@@ -5,12 +5,17 @@
 #include <cobs/Print.h>
 #include "messages.pb.h"
 
+//BME280
+#include <Wire.h>
+#include "SparkFunBME280.h"
+
 using namespace packetio;
 
 COBSStream cobs_in(Serial);
-
 COBSPrint cobs_out(Serial);
 pb_ostream_s pb_out = as_pb_ostream(cobs_out);
+
+void *devices[20];
 
 bool encode_string(pb_ostream_t* stream, const pb_field_t* field, void* const* arg)
 {
@@ -20,6 +25,24 @@ bool encode_string(pb_ostream_t* stream, const pb_field_t* field, void* const* a
         return false;
 
     return pb_encode_string(stream, (uint8_t*)str, strlen(str));
+}
+
+#ifdef __arm__
+// should use uinstd.h to define sbrk but Due causes a conflict
+extern "C" char* sbrk(int incr);
+#else  // __ARM__
+extern char *__brkval;
+#endif  // __arm__
+ 
+int freeMemory() {
+  char top;
+#ifdef __arm__
+  return &top - reinterpret_cast<char*>(sbrk(0));
+#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
+  return &top - __brkval;
+#else  // __arm__
+  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
+#endif  // __arm__
 }
 
 void setup()
@@ -80,6 +103,25 @@ void loop()
       wdt_enable(WDTO_15MS); // Enable watchdog
       while (1)
       {};
+      break;
+
+    case Request_configureRequest_tag:
+      //TODO parse
+
+      // BME280 * bmePt = new BME280;
+      // devices[0] = bmePt;
+      // if (bmePt -> beginI2C() == false){
+      //   //TODO
+      //   cobs_out.println("BME NOT FOUND");
+      //   cobs_out.end();
+
+      //   while(1);
+      // }
+
+
+      //Todo remove this test message
+      response.which_type = Response_ds18B20Response_tag;
+      response.type.ds18B20Response.temperature = freeMemory();
       break;
 
     default:
