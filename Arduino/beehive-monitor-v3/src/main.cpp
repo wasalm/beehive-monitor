@@ -1,12 +1,38 @@
 #include <Arduino.h>
 #include <avr/wdt.h>
 
+// Calc free memory
+#ifdef __arm__
+// should use uinstd.h to define sbrk but Due causes a conflict
+extern "C" char* sbrk(int incr);
+#else  // __ARM__
+extern char *__brkval;
+#endif  // __arm__
+  
+int freeMemory() {
+  char top;
+#ifdef __arm__
+  return &top - reinterpret_cast<char*>(sbrk(0));
+#elif defined(CORE_TEENSY) || (ARDUINO > 103 && ARDUINO != 151)
+  return &top - __brkval;
+#else  // __arm__
+  return __brkval ? &top - __brkval : &top - __malloc_heap_start;
+#endif  // __arm__
+}
+
 // BME280
 #include <Wire.h>
 #include <SparkFunBME280.h>
 
 //SSD1315
 #include <U8g2lib.h>
+
+//HX711
+#include <HX711.h>
+
+//DS18B20
+#include <OneWire.h>
+#include <DallasTemperature.h>
 
 //constants for Serial protocol
 #define ACTIONSTART 0 
@@ -18,7 +44,7 @@ char buffer[256]; // Serial buffer
 uint8_t bufPtr = 0;
 
 enum device {
-  NONE_DEV, BME280_DEV, SSD1315_DEV, HX711_DEV, DS18D20_DEV,
+  NONE_DEV, BME280_DEV, SSD1315_DEV, HX711_DEV, DS18B20_DEV,
 };
 
 #define MAX_DEVICES (20)
@@ -116,7 +142,7 @@ int getSecondaryAddress(bool checkTaken) {
   return result;
 }
 
-int getId() {
+int getId(bool checkTaken) {
   if(buffer[IDSTART + 0] < '0' || buffer[IDSTART + 0] > '9' || buffer[IDSTART + 1] < '0' || buffer[IDSTART + 1] > '9') {
     Serial.println("EId must be an integer");
     return -1;
@@ -125,6 +151,14 @@ int getId() {
   int msb = buffer[1] - '0';
   int lsb = buffer[2] - '0';
 
+  int id = msb * 10 + lsb;
+
+  if(checkTaken) {
+    if(devType[id] != NONE_DEV) {
+      Serial.println("EId is already used");
+      return -1;
+    }
+  }
   return msb * 10 + lsb;
 }
 
@@ -156,7 +190,7 @@ bool configureSSD1315(int id, int primaryAddress, int secondaryAddress) {
 bool configureBME280(int id, int primaryAddress, int secondaryAddress) {
 
   if(primaryAddress != SCL) {
-    Serial.println("E:BME280 uses hardware i2c. please connect to different pin");
+    Serial.println("EBME280 uses hardware i2c. please connect to different pin");
     return false;
   }
 
@@ -175,10 +209,61 @@ bool configureBME280(int id, int primaryAddress, int secondaryAddress) {
   return true;
 }
 
+bool configureHX711(int id, int primaryAddress, int secondaryAddress) {
+  if(primaryAddress == SCL) {
+    Serial.println("EHX711 doesn't use i2c. Please select a different port.");
+    return false;
+  }
+
+  HX711 * scale = new HX711;
+
+  // Primary   = SCK
+  // Secondary = DAT
+  scale -> begin(secondaryAddress, primaryAddress);
+
+  if (! scale-> wait_ready_timeout(1000)) {
+    Serial.println("EThe HX711 sensor did not respond. Please check wiring.");
+    delete scale;
+    return false;
+  }
+
+  pinTaken[primaryAddress] = true;
+  pinTaken[secondaryAddress] = true;
+  devType[id] = HX711_DEV;
+  devPointer[id] = scale;
+
+  return true;
+}
+
+bool configureDS18B20(int id, int primaryAddress, int secondaryAddress) {
+  if(primaryAddress == SCL) {
+    Serial.println("EDS18B20 doesn't use i2c. Please select a different port.");
+    return false;
+  }
+
+  OneWire * onewire = new OneWire(primaryAddress);
+  DallasTemperature * sensors = new DallasTemperature(onewire);
+  sensors -> begin();
+
+  if(sensors -> getDS18Count() == 0) {
+    Serial.println("EThe Ds18B20 sensor did not respond. Please check wiring.");
+    delete sensors;
+    delete onewire;
+    return false;
+  }
+  
+  pinTaken[primaryAddress] = true;
+  devType[id] = DS18B20_DEV;
+  devPointer[id] = sensors;
+
+  return true;
+}
+
+
 void configureDevice() {
   int primaryAddress = getPrimaryAddress(true);
   int secondaryAdddress = getSecondaryAddress(true);
-  int id = getId();
+  int id = getId(true);
   bool succes = true;
   bool deviceFound = false;
 
@@ -212,6 +297,28 @@ void configureDevice() {
        deviceFound = true;
        succes = configureSSD1315(id, primaryAddress, secondaryAdddress);
      }
+
+     if(deviceFound == false && buffer[MESSAGESTART + 0] == 'H' 
+     && buffer[MESSAGESTART + 1] == 'X' 
+     && buffer[MESSAGESTART + 2] == '7'
+     && buffer[MESSAGESTART + 3] == '1'
+     && buffer[MESSAGESTART + 4] == '1'
+     && buffer[MESSAGESTART + 5] == '\n') {
+       deviceFound = true;
+       succes = configureHX711(id, primaryAddress, secondaryAdddress);
+     }
+
+     if(deviceFound == false && buffer[MESSAGESTART + 0] == 'D' 
+     && buffer[MESSAGESTART + 1] == 'S' 
+     && buffer[MESSAGESTART + 2] == '1'
+     && buffer[MESSAGESTART + 3] == '8'
+     && buffer[MESSAGESTART + 4] == 'B'
+     && buffer[MESSAGESTART + 5] == '2'
+     && buffer[MESSAGESTART + 6] == '0'
+     && buffer[MESSAGESTART + 7] == '\n') {
+       deviceFound = true;
+       succes = configureDS18B20(id, primaryAddress, secondaryAdddress);
+     }
   }
 
   if(!deviceFound) {
@@ -220,12 +327,18 @@ void configureDevice() {
   }
 
   //Response
-  char response[6] = {'C', buffer[IDSTART], buffer[IDSTART + 1], '0' + ((char) succes), '\n', 0};
+  char response[6] = {'C', buffer[IDSTART], buffer[IDSTART + 1], (char) ('0' + succes), '\n', 0};
   Serial.print(&response[0]);
 }
 
 void getData() {
-  Serial.println("ETODO");
+  Serial.println("ETODO: getData");
+}
+
+void getFreeMemory() {
+  Serial.print("F");
+  Serial.print(freeMemory());
+  Serial.println();
 }
 
 void parseMessage() {
@@ -241,6 +354,10 @@ void parseMessage() {
 
   case 'G':
     getData();
+    break;
+  
+  case 'F':
+    getFreeMemory();
     break;
   
   default:
