@@ -55,7 +55,7 @@ bool pinTaken[30];
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("R"); // Device is reset
+  Serial.println('R'); // Device is reset
 
   //Setup device list
   for(size_t i=0; i< MAX_DEVICES; i++) {
@@ -84,7 +84,7 @@ uint8_t getPrimaryAddress(bool checkTaken) {
     
     case 'D':
       if(buffer[ADDRESSSTART + 1] - '0' > 13) {
-        Serial.println("EInvalid pinmapping");
+        Serial.println(F("EInvalid pinmapping"));
         break;
       }
       result =  buffer[ADDRESSSTART + 1] - '0';
@@ -92,7 +92,7 @@ uint8_t getPrimaryAddress(bool checkTaken) {
   
     case 'A':
       if(buffer[ADDRESSSTART + 1] - '0' > 7) {
-        Serial.println("EInvalid pinmapping");
+        Serial.println(F("EInvalid pinmapping"));
         break;
       }
       result = buffer[ADDRESSSTART + 1] - '0' + A0;
@@ -101,7 +101,7 @@ uint8_t getPrimaryAddress(bool checkTaken) {
 
   if(result != -1 && checkTaken && buffer[ADDRESSSTART + 0] != 'I') {
     if(pinTaken[result]) {
-      Serial.println("EOverlapping pins");
+      Serial.println(F("EOverlapping pins"));
       result = -1;
       }
   }
@@ -118,7 +118,7 @@ int getSecondaryAddress(bool checkTaken) {
     
     case 'D':
       if(buffer[ADDRESSSTART + 1] - '0' > 12) {
-        Serial.println("EInvalid pinmapping");
+        Serial.println(F("EInvalid pinmapping"));
         break;
       }
       result =  buffer[ADDRESSSTART + 1] - '0' + 1;
@@ -126,7 +126,7 @@ int getSecondaryAddress(bool checkTaken) {
   
     case 'A':
       if(buffer[ADDRESSSTART + 1] - '0' > 6) {
-        Serial.println("EInvalid pinmapping");
+        Serial.println(F("EInvalid pinmapping"));
         break;
       }
       result = buffer[ADDRESSSTART + 1] - '0' + A0 + 1;
@@ -135,7 +135,7 @@ int getSecondaryAddress(bool checkTaken) {
 
   if(result != -1 && checkTaken && buffer[ADDRESSSTART + 0] != 'I') {
     if(pinTaken[result]) {
-      Serial.println("EOverlapping pins");
+      Serial.println(F("EOverlapping pins"));
       result = -1;
       }
   }
@@ -144,7 +144,7 @@ int getSecondaryAddress(bool checkTaken) {
 
 int getId(bool checkTaken) {
   if(buffer[IDSTART + 0] < '0' || buffer[IDSTART + 0] > '9' || buffer[IDSTART + 1] < '0' || buffer[IDSTART + 1] > '9') {
-    Serial.println("EId must be an integer");
+    Serial.println(F("EId must be an integer"));
     return -1;
   }
 
@@ -153,9 +153,14 @@ int getId(bool checkTaken) {
 
   int id = msb * 10 + lsb;
 
+  if(id >= MAX_DEVICES) {
+    Serial.println(F("EMaximal 20 devices supported"));
+    return -1;
+  }
+
   if(checkTaken) {
     if(devType[id] != NONE_DEV) {
-      Serial.println("EId is already used");
+      Serial.println(F("EId is already used"));
       return -1;
     }
   }
@@ -164,7 +169,7 @@ int getId(bool checkTaken) {
 
 bool configureSSD1315(int id, int primaryAddress, int secondaryAddress) {
   if(primaryAddress == SCL) {
-    Serial.println("E:SSD1315 uses software i2c. please connect to different pin");
+    Serial.println(F("E:SSD1315 uses software i2c. please connect to different pin"));
     return false;
   }
 
@@ -190,7 +195,7 @@ bool configureSSD1315(int id, int primaryAddress, int secondaryAddress) {
 bool configureBME280(int id, int primaryAddress, int secondaryAddress) {
 
   if(primaryAddress != SCL) {
-    Serial.println("EBME280 uses hardware i2c. please connect to different pin");
+    Serial.println(F("EBME280 uses hardware i2c. please connect to different pin"));
     return false;
   }
 
@@ -198,7 +203,7 @@ bool configureBME280(int id, int primaryAddress, int secondaryAddress) {
   bme280Ptr -> setI2CAddress(0x76);
 
   if (bme280Ptr -> beginI2C() == false) {
-    Serial.println("EThe BME280 sensor did not respond. Please check wiring.");
+    Serial.println(F("EThe BME280 sensor did not respond. Please check wiring."));
     delete bme280Ptr;
     return false;
   }
@@ -211,7 +216,7 @@ bool configureBME280(int id, int primaryAddress, int secondaryAddress) {
 
 bool configureHX711(int id, int primaryAddress, int secondaryAddress) {
   if(primaryAddress == SCL) {
-    Serial.println("EHX711 doesn't use i2c. Please select a different port.");
+    Serial.println(F("EHX711 doesn't use i2c. Please select a different port."));
     return false;
   }
 
@@ -222,7 +227,7 @@ bool configureHX711(int id, int primaryAddress, int secondaryAddress) {
   scale -> begin(secondaryAddress, primaryAddress);
 
   if (! scale-> wait_ready_timeout(1000)) {
-    Serial.println("EThe HX711 sensor did not respond. Please check wiring.");
+    Serial.println(F("EThe HX711 sensor did not respond. Please check wiring."));
     delete scale;
     return false;
   }
@@ -237,7 +242,7 @@ bool configureHX711(int id, int primaryAddress, int secondaryAddress) {
 
 bool configureDS18B20(int id, int primaryAddress, int secondaryAddress) {
   if(primaryAddress == SCL) {
-    Serial.println("EDS18B20 doesn't use i2c. Please select a different port.");
+    Serial.println(F("EDS18B20 doesn't use i2c. Please select a different port."));
     return false;
   }
 
@@ -246,11 +251,13 @@ bool configureDS18B20(int id, int primaryAddress, int secondaryAddress) {
   sensors -> begin();
 
   if(sensors -> getDS18Count() == 0) {
-    Serial.println("EThe Ds18B20 sensor did not respond. Please check wiring.");
+    Serial.println(F("EThe Ds18B20 sensor did not respond. Please check wiring."));
     delete sensors;
     delete onewire;
     return false;
   }
+
+  sensors -> setResolution(12);
   
   pinTaken[primaryAddress] = true;
   devType[id] = DS18B20_DEV;
@@ -322,7 +329,7 @@ void configureDevice() {
   }
 
   if(!deviceFound) {
-    Serial.println("ENo device found");
+    Serial.println(F("ENo device found"));
     succes = false;
   }
 
@@ -331,19 +338,140 @@ void configureDevice() {
   Serial.print(&response[0]);
 }
 
+bool getHX711(int id) {
+  HX711 * ptr = (HX711 *) devPointer[id];
+  if(ptr -> is_ready()) {
+    double val = ptr -> get_value();
+    Serial.write('G');
+    Serial.write(buffer[IDSTART + 0]);
+    Serial.write(buffer[IDSTART + 1]);
+    Serial.write('1');
+
+    Serial.write('W');
+    Serial.println(val,DEC);
+    return true;
+  }
+
+  return false;
+}
+
+bool getBME280(int id) {
+  BME280 * ptr = (BME280 *) devPointer[id];
+
+  Serial.write('G');
+  Serial.write(buffer[IDSTART + 0]);
+  Serial.write(buffer[IDSTART + 1]);
+  Serial.write('1');
+
+  Serial.write('H');
+  Serial.print(ptr -> readFloatHumidity(), DEC);
+
+  Serial.write('P');
+  Serial.print(ptr -> readFloatPressure(), DEC);
+
+  Serial.write('T');
+  Serial.print(ptr -> readTempC(), DEC);
+
+  Serial.println();
+  return true;
+}
+
+bool getDS18B20(int id) {
+  DallasTemperature * sensors = (DallasTemperature *) devPointer[id];
+  sensors -> requestTemperatures();
+
+  float tempC = sensors -> getTempCByIndex(0);
+
+  if(tempC != DEVICE_DISCONNECTED_C) {
+    Serial.write('G');
+    Serial.write(buffer[IDSTART + 0]);
+    Serial.write(buffer[IDSTART + 1]);
+    Serial.write('1');
+
+    Serial.write('T');
+    Serial.println(tempC,DEC);
+    return true;
+  } else {
+    Serial.println(F("EDS18B20 Disconnected"));
+    return false;
+  }
+  return false;
+}
+
 void getData() {
-  Serial.println("ETODO: getData");
+  int id = getId(false);
+  bool succes = true;
+
+  if(id == -1) {
+    succes = false;
+  } else {
+    switch(devType[id]) {
+      case BME280_DEV:
+        succes = getBME280(id);
+        break;
+      case SSD1315_DEV:
+        Serial.println(F("ESSD1315 is an output device"));
+        break;
+      case HX711_DEV:
+        succes = getHX711(id);
+        break;
+      case DS18B20_DEV:
+        succes = getDS18B20(id);
+        break;
+      default:
+        Serial.println(F("ENo device is configured for this id"));
+        succes = false;
+    }
+  }
+
+  if(!succes) {
+    //Response
+    char response[6] = {'G', buffer[IDSTART], buffer[IDSTART + 1], '0', '\n', 0};
+    Serial.print(&response[0]);
+  }
 }
 
 void getFreeMemory() {
-  Serial.print("F");
+  Serial.print('F');
   Serial.print(freeMemory());
   Serial.println();
+}
+
+void emptyScreen() {
+  int id = getId(false);
+  bool succes = true;
+
+  if(id == -1) {
+    succes = false;
+  } else {
+    if(devType[id] != SSD1315_DEV) {
+      Serial.println(F("No screen selected"));
+      succes = false;
+    } else {
+      U8X8_SSD1306_128X64_NONAME_SW_I2C * ptr = (U8X8_SSD1306_128X64_NONAME_SW_I2C * ) devPointer[id];
+      ptr -> clearDisplay();         // clear the internal memory
+      succes = true;
+    }
+  }
+
+  char response[6] = {'E', buffer[IDSTART], buffer[IDSTART + 1], (char) ('0' + succes), '\n', 0};
+  Serial.print(&response[0]);
+}
+
+void setFont() {
+  //TODO
+}
+
+void writeScreen() {
+  //TODO
 }
 
 void parseMessage() {
   switch (buffer[ACTIONSTART])
   {
+  /*
+   * Initialisation commands
+   */
   case 'R':
     softwareReset();
     break;
@@ -352,16 +480,37 @@ void parseMessage() {
     configureDevice();
     break;
 
+  /*
+   * Retreive data commands
+   */
   case 'G':
     getData();
     break;
   
+  /*
+   * Screen commands
+   */
+  case 'E':
+    emptyScreen();
+    break;
+  
   case 'F':
+    setFont();
+    break;
+
+  case 'W':
+    writeScreen();
+    break;
+  
+  /*
+   * Debug commands
+   */
+  case 'M':
     getFreeMemory();
     break;
   
   default:
-    Serial.println("EUnknown command");
+    Serial.println(F("EUnknown command"));
     break;
   }
 }

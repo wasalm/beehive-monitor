@@ -26,6 +26,22 @@ Communication between Rpi -> Arduino:
       Example:
       GD4\n
 
+   Set Font request:
+
+      'FXXYYY\n' where XX is the ID and Y is name of font
+
+   Empty display request:
+
+      'EXX\n' where XX is the ID
+
+   Draw string request:
+
+      'WXXYYZZWW...W\n' where XX is the ID and YY is the x position in HEX, ZZ is the y position in hex and WW...WW is the string
+      Request can be at most 255 long (incl. new line)
+
+   Request free memory:
+      'M\n:'
+
 Communication between Arduino -> Rpi
 
    Reset response:
@@ -47,7 +63,23 @@ Communication between Arduino -> Rpi
       
    Get response:
 
-      (Todo)
+      Starts with 'GXXY\n' where XX is the ID and Y is 0/1 for succes and fail
+      After that data will be returned starting with a letter denoting type and after that the value.
+
+   Set Font response:
+
+      'FXXY\n' where XX is the ID and Y is 0/1 for succes and fail
+
+   Empty display response:
+
+      'EXXY\n' where XX is the ID and Y is 0/1 for succes and fail
+
+   Draw string response:
+
+      'WXXY\n' where XX is the ID and Y is 0/1 for succes and fail
+
+   Free memory response:
+      'MXX..X\n:' where XX is amount of free memory
 
 Device   | Lines needed | Pin
 --------------------------------------------
