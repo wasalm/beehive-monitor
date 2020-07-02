@@ -1,0 +1,65 @@
+Communication between Rpi -> Arduino:
+
+   Reset:
+      R\n
+
+   Configure Device:
+
+      Variable length:
+         1: 'C'
+         2 - 3: Device Id
+         4 - 5: Primary port, in capital, if i2c write 'II'
+         6 - (n-1): name of device, can be:
+            BME280
+            SSD1315
+            HX711
+            DS18B20
+         n: '\n'
+
+   Retreive data:
+
+      4 bytes: 
+         1: 'G'
+         2-3: Device Id 
+         4: '\n'
+
+      Example:
+      GD4\n
+
+Communication between Arduino -> Rpi
+
+   Reset response:
+      "R\n";
+   
+   Error response:
+
+      Variable length:
+      Starts with 'E' and ends with '\n'
+      Between is readable string.
+
+   Configure response:
+
+      5 bytes: 
+         1: 'C'
+         2-3: Device Id
+         4: 0 fail, 1 succes
+         5: '\n'
+      
+   Get response:
+
+      (Todo)
+
+Device   | Lines needed | Pin
+--------------------------------------------
+BME280   | 2            | i2c
+SSD1315  | 2            | A0 
+HX711    | 2            | A2
+HX711    | 2            | A6
+DS18B20  | 1            | D2
+DS18B20  | 1            | D3
+
+Device names:
+
+Analog:  A0, A2, A6,
+Digital: D2, D3, D4, D5, D6, D7
+I2C:     I2
