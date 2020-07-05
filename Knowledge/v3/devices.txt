@@ -46,7 +46,7 @@ Devices and needed software:
     - Grove compatible 1-wire temperature Sensor (DS18B20)
 
         Use the following Arduino Library:
-            https://github.com/matmunk/DS18B20
+            https://github.com/milesburton/Arduino-Temperature-Control-Library
 
     - Seeed Studio Grove OLED Display 0.96 inch 128*64 pixels wit - SSD1315
 
@@ -56,12 +56,3 @@ Devices and needed software:
         Address the device as follows:
 
             U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
-            U8X8_SSD1306_128X64_NONAME_HW_I2C([reset [, clock, data]])
-
- 
- Using Arduino Protobufs:
-    
-    See https://github.com/nanopb/nanopb
-
-    pbjs messages.proto --es5 messages.js
-    ./nanopb_generator ~/Development/Git/Thuis/beehive-monitor/Knowledge/v3/messages/messages.proto -D ~/Development/Git/Thuis/beehive-monitor/Knowledge/v3/messages/ -I ~/Development/Git/Thuis/beehive-monitor/Knowledge/v3/messages/

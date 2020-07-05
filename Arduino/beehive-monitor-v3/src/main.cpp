@@ -177,12 +177,9 @@ bool configureSSD1315(int id, int primaryAddress, int secondaryAddress) {
   u8x8 = new U8X8_SSD1306_128X64_NONAME_SW_I2C(primaryAddress, secondaryAddress, U8X8_PIN_NONE);
     
   u8x8 -> begin();
-
-  //TODO, temporary test
-  u8x8 -> clearDisplay();         // clear the internal memory
-  //draw some you want; such as 
+  u8x8 -> clearDisplay(); 
+  // Set a default font
   u8x8 -> setFont(u8x8_font_amstrad_cpc_extended_f);
-  u8x8 -> drawString(0,10,"Hello World!");  // write something to the internal memory
 
   pinTaken[primaryAddress] = true;
   pinTaken[secondaryAddress] = true;
@@ -280,52 +277,28 @@ void configureDevice() {
   }
   
   if(succes) {
-    //Pins are now well defined.
+    // Pins are now well defined.
     // Now we iterate all devices
-    if(deviceFound == false && buffer[MESSAGESTART + 0] == 'B' 
-     && buffer[MESSAGESTART + 1] == 'M' 
-     && buffer[MESSAGESTART + 2] == 'E'
-     && buffer[MESSAGESTART + 3] == '2'
-     && buffer[MESSAGESTART + 4] == '8'
-     && buffer[MESSAGESTART + 5] == '0'
-     && buffer[MESSAGESTART + 6] == '\n') {
-       deviceFound = true;
-       succes = configureBME280(id,primaryAddress, secondaryAdddress);
-     }
 
-    if(deviceFound == false && buffer[MESSAGESTART + 0] == 'S' 
-     && buffer[MESSAGESTART + 1] == 'S' 
-     && buffer[MESSAGESTART + 2] == 'D'
-     && buffer[MESSAGESTART + 3] == '1'
-     && buffer[MESSAGESTART + 4] == '3'
-     && buffer[MESSAGESTART + 5] == '1'
-     && buffer[MESSAGESTART + 6] == '5'
-     && buffer[MESSAGESTART + 7] == '\n') {
-       deviceFound = true;
-       succes = configureSSD1315(id, primaryAddress, secondaryAdddress);
-     }
+    if(!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("BME280")) == 0) {
+      deviceFound = true;
+      succes = configureBME280(id, primaryAddress, secondaryAdddress);
+    }
 
-     if(deviceFound == false && buffer[MESSAGESTART + 0] == 'H' 
-     && buffer[MESSAGESTART + 1] == 'X' 
-     && buffer[MESSAGESTART + 2] == '7'
-     && buffer[MESSAGESTART + 3] == '1'
-     && buffer[MESSAGESTART + 4] == '1'
-     && buffer[MESSAGESTART + 5] == '\n') {
-       deviceFound = true;
-       succes = configureHX711(id, primaryAddress, secondaryAdddress);
-     }
+    if(!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("SSD1315")) == 0) {
+      deviceFound = true;
+      succes = configureSSD1315(id, primaryAddress, secondaryAdddress);
+    }
 
-     if(deviceFound == false && buffer[MESSAGESTART + 0] == 'D' 
-     && buffer[MESSAGESTART + 1] == 'S' 
-     && buffer[MESSAGESTART + 2] == '1'
-     && buffer[MESSAGESTART + 3] == '8'
-     && buffer[MESSAGESTART + 4] == 'B'
-     && buffer[MESSAGESTART + 5] == '2'
-     && buffer[MESSAGESTART + 6] == '0'
-     && buffer[MESSAGESTART + 7] == '\n') {
-       deviceFound = true;
-       succes = configureDS18B20(id, primaryAddress, secondaryAdddress);
-     }
+    if(!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("HX711")) == 0) {
+      deviceFound = true;
+      succes = configureHX711(id, primaryAddress, secondaryAdddress);
+    }
+
+    if(!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("DS18B20")) == 0) {
+      deviceFound = true;
+      succes = configureDS18B20(id, primaryAddress, secondaryAdddress);
+    }
   }
 
   if(!deviceFound) {
@@ -458,12 +431,57 @@ void emptyScreen() {
   Serial.print(&response[0]);
 }
 
-void setFont() {
-  //TODO
+int hexToDec(char c) {
+  if(c >= '0' && c <= '9') {
+    return c - '0';
+  }
+
+  if(c >= 'a' && c <= 'f') {
+    return c - 'a' + 10;
+  }
+
+  if(c >= 'A' && c <= 'F') {
+    return c - 'A' + 10;
+  }
+
+  Serial.println("EInvalid hexadecimal number");
+  return -1;
 }
 
 void writeScreen() {
-  //TODO
+  int id = getId(false);
+  bool succes = true;
+  if(id == -1) {
+    succes = false;
+  } else {
+    if(devType[id] != SSD1315_DEV) {
+      Serial.println(F("No screen selected"));
+      succes = false;
+    } else {
+      int x_msb = hexToDec(buffer[IDSTART + 2]);
+      int x_lsb = hexToDec(buffer[IDSTART + 3]);
+
+      int y_msb = hexToDec(buffer[IDSTART + 4]);
+      int y_lsb = hexToDec(buffer[IDSTART + 5]);
+
+      if(x_msb == -1 || x_lsb == -1 || y_msb == -1 || y_lsb == -1 ) 
+      {
+        succes = false;
+      } else {
+        int x = (x_msb << 4) + x_lsb;
+        int y = (y_msb << 4) + y_lsb;
+        Serial.println(x);
+        Serial.println(y);
+
+        U8X8_SSD1306_128X64_NONAME_SW_I2C * ptr = (U8X8_SSD1306_128X64_NONAME_SW_I2C * ) devPointer[id];
+        ptr -> drawString(x,y, &buffer[IDSTART + 6]);
+      }
+    }
+  }
+
+  char response[6] = {'E', buffer[IDSTART], buffer[IDSTART + 1], (char) ('0' + succes), '\n', 0};
+  Serial.print(&response[0]);
+  // u8x8 -> drawString(0,10,"Hello World!");  // write something to the internal memory
 }
 
 void parseMessage() {
@@ -493,10 +511,6 @@ void parseMessage() {
   case 'E':
     emptyScreen();
     break;
-  
-  case 'F':
-    setFont();
-    break;
 
   case 'W':
     writeScreen();
@@ -523,6 +537,7 @@ void loop() {
     bufPtr ++;
 
     if(byte == '\n') {
+      buffer[bufPtr-1] = 0; // change last symbol to zero character. Use this to parse messages
       parseMessage();
       bufPtr = 0;
     }
