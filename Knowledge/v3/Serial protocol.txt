@@ -26,7 +26,7 @@ Communication between Rpi -> Arduino:
       Example:
       GD4\n
 
-   Set Font request:
+   Set Font request: (NOT implemented)
 
       'FXXYYY\n' where XX is the ID and Y is name of font
 
@@ -36,7 +36,8 @@ Communication between Rpi -> Arduino:
 
    Draw string request:
 
-      'WXXYYZZWW...W\n' where XX is the ID and YY is the x position in HEX, ZZ is the y position in hex and WW...WW is the string
+      'WXXYZWW...W\n' where XX is the ID and Y is the x position in HEX, Z is the y position in hex and WW...WW is the string
+      X is between 0 and 15(F) and Y is between 0 and 7.
       Request can be at most 255 long (incl. new line)
 
    Request free memory:

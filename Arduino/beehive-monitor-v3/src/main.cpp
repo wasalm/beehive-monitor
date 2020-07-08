@@ -24,7 +24,7 @@ int freeMemory() {
 #include <Wire.h>
 #include <SparkFunBME280.h>
 
-//SSD1315
+//SSD1306
 #include <U8g2lib.h>
 
 //HX711
@@ -44,7 +44,7 @@ char buffer[256]; // Serial buffer
 uint8_t bufPtr = 0;
 
 enum device {
-  NONE_DEV, BME280_DEV, SSD1315_DEV, HX711_DEV, DS18B20_DEV,
+  NONE_DEV, BME280_DEV, SSD1306_DEV, HX711_DEV, DS18B20_DEV,
 };
 
 #define MAX_DEVICES (20)
@@ -167,23 +167,20 @@ int getId(bool checkTaken) {
   return msb * 10 + lsb;
 }
 
-bool configureSSD1315(int id, int primaryAddress, int secondaryAddress) {
-  if(primaryAddress == SCL) {
-    Serial.println(F("E:SSD1315 uses software i2c. please connect to different pin"));
+bool configureSSD1306(int id, int primaryAddress, int secondaryAddress) {
+  if(primaryAddress != SCL) {
+    Serial.println(F("E:SSD1306 uses hardware i2c. please connect to different pin"));
     return false;
   }
 
-  U8X8_SSD1306_128X64_NONAME_SW_I2C * u8x8;
-  u8x8 = new U8X8_SSD1306_128X64_NONAME_SW_I2C(primaryAddress, secondaryAddress, U8X8_PIN_NONE);
+  U8X8_SSD1306_128X64_NONAME_HW_I2C * u8x8 = new U8X8_SSD1306_128X64_NONAME_HW_I2C(U8X8_PIN_NONE);
     
   u8x8 -> begin();
   u8x8 -> clearDisplay(); 
   // Set a default font
   u8x8 -> setFont(u8x8_font_amstrad_cpc_extended_f);
 
-  pinTaken[primaryAddress] = true;
-  pinTaken[secondaryAddress] = true;
-  devType[id] = SSD1315_DEV;
+  devType[id] = SSD1306_DEV;
   devPointer[id] = u8x8;
 
   return true;
@@ -285,9 +282,9 @@ void configureDevice() {
       succes = configureBME280(id, primaryAddress, secondaryAdddress);
     }
 
-    if(!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("SSD1315")) == 0) {
+    if(!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("SSD1306")) == 0) {
       deviceFound = true;
-      succes = configureSSD1315(id, primaryAddress, secondaryAdddress);
+      succes = configureSSD1306(id, primaryAddress, secondaryAdddress);
     }
 
     if(!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("HX711")) == 0) {
@@ -382,8 +379,8 @@ void getData() {
       case BME280_DEV:
         succes = getBME280(id);
         break;
-      case SSD1315_DEV:
-        Serial.println(F("ESSD1315 is an output device"));
+      case SSD1306_DEV:
+        Serial.println(F("ESSD1306 is an output device"));
         break;
       case HX711_DEV:
         succes = getHX711(id);
@@ -417,11 +414,11 @@ void emptyScreen() {
   if(id == -1) {
     succes = false;
   } else {
-    if(devType[id] != SSD1315_DEV) {
+    if(devType[id] != SSD1306_DEV) {
       Serial.println(F("No screen selected"));
       succes = false;
     } else {
-      U8X8_SSD1306_128X64_NONAME_SW_I2C * ptr = (U8X8_SSD1306_128X64_NONAME_SW_I2C * ) devPointer[id];
+      U8X8_SSD1306_128X64_NONAME_HW_I2C * ptr = (U8X8_SSD1306_128X64_NONAME_HW_I2C * ) devPointer[id];
       ptr -> clearDisplay();         // clear the internal memory
       succes = true;
     }
@@ -454,34 +451,25 @@ void writeScreen() {
   if(id == -1) {
     succes = false;
   } else {
-    if(devType[id] != SSD1315_DEV) {
+    if(devType[id] != SSD1306_DEV) {
       Serial.println(F("No screen selected"));
       succes = false;
     } else {
-      int x_msb = hexToDec(buffer[IDSTART + 2]);
-      int x_lsb = hexToDec(buffer[IDSTART + 3]);
+      int x = hexToDec(buffer[IDSTART + 2]);
+      int y = hexToDec(buffer[IDSTART + 3]);
 
-      int y_msb = hexToDec(buffer[IDSTART + 4]);
-      int y_lsb = hexToDec(buffer[IDSTART + 5]);
-
-      if(x_msb == -1 || x_lsb == -1 || y_msb == -1 || y_lsb == -1 ) 
+      if(x == -1 || y == -1 ) 
       {
         succes = false;
       } else {
-        int x = (x_msb << 4) + x_lsb;
-        int y = (y_msb << 4) + y_lsb;
-        Serial.println(x);
-        Serial.println(y);
-
-        U8X8_SSD1306_128X64_NONAME_SW_I2C * ptr = (U8X8_SSD1306_128X64_NONAME_SW_I2C * ) devPointer[id];
-        ptr -> drawString(x,y, &buffer[IDSTART + 6]);
+        U8X8_SSD1306_128X64_NONAME_HW_I2C * ptr = (U8X8_SSD1306_128X64_NONAME_HW_I2C * ) devPointer[id];
+        ptr -> drawString(x,y, &buffer[IDSTART + 4]);
       }
     }
   }
 
-  char response[6] = {'E', buffer[IDSTART], buffer[IDSTART + 1], (char) ('0' + succes), '\n', 0};
+  char response[6] = {'W', buffer[IDSTART], buffer[IDSTART + 1], (char) ('0' + succes), '\n', 0};
   Serial.print(&response[0]);
-  // u8x8 -> drawString(0,10,"Hello World!");  // write something to the internal memory
 }
 
 void parseMessage() {
