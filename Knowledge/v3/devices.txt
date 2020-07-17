@@ -11,7 +11,7 @@ Devices and needed software:
         Using Libraries:
 
             https://serialport.io/
-            https://github.com/vincentsaluzzo/node-microphone
+            https://github.com/MexXxo/node-microphone
             https://github.com/zszszsz/node-fftw
 
 -- Main Connected Devices:
