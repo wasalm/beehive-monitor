@@ -29,6 +29,11 @@ function rak811HardReset() {
 function sendMsg(msg) {
 	return new Promise((resolve, reject) => {
 		const callback = (line) => {
+			if(line.startsWith("at+recv=")) {
+				//ignore
+				return;
+			}
+
 			if(line.startsWith("OK")) {
 				resolve(line.substr(2));
 			} else {
@@ -49,8 +54,7 @@ console.log("RAK811 TEST");
 	try{
 		await rak811HardReset();
 
-
-		await sendMsg("at+recv_ex=disable");
+		await sendMsg("at+recv_ex=0");
 		await sendMsg("at+band=EU868"); // Set band to European bands (868MHz)
 
 		const devAddr = "26011500";
@@ -74,10 +78,14 @@ console.log("RAK811 TEST");
 		await sendMsg("at+join=abp");
 		await sendMsg("at+link_cnt=24,0");
 		await sendMsg("at+send=0,1,010203040506"); //Send unconfirmed on port 1 text: %5a
+		
 
-		await sleep(10000);
-		console.log("msg2");
-		await sendMsg("at+send=0,1,0708090A0B0C"); //Send unconfirmed on port 1 text: %5a
+		
+		await sendMsg("at+signal");
+		// await sleep(10000);
+		//console.log("msg2");
+		//await sendMsg("at+send=1,1,0708090A0B0C"); //Send unconfirmed on port 1 text: %5a
+		//await sendMsg("at+signal");
 
 	} catch(e) {
 		console.error(JSON.stringify(e));
