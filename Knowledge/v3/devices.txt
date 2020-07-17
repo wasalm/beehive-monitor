@@ -31,6 +31,10 @@ Devices and needed software:
         Communicate with Raspberry Pi using Serial.
         See https://medium.com/@machadogj/arduino-and-node-js-via-serial-port-bcf9691fab6a for more info.
 
+    - USB drive
+
+        Mount drive accoring to https://www.raspberrypi.org/documentation/configuration/external-storage.md
+
 -- Grove Devices
 
     - Temp & Humi & Barometer Sensor (BME280)

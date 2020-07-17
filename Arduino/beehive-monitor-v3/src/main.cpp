@@ -176,6 +176,7 @@ bool configureSSD1306(int id, int primaryAddress, int secondaryAddress) {
   U8X8_SSD1306_128X64_NONAME_HW_I2C * u8x8 = new U8X8_SSD1306_128X64_NONAME_HW_I2C(U8X8_PIN_NONE);
     
   u8x8 -> begin();
+  u8x8 -> setFlipMode(1);
   u8x8 -> clearDisplay(); 
   // Set a default font
   u8x8 -> setFont(u8x8_font_amstrad_cpc_extended_f);
@@ -402,7 +403,7 @@ void getData() {
 }
 
 void getFreeMemory() {
-  Serial.print('F');
+  Serial.print('M');
   Serial.print(freeMemory());
   Serial.println();
 }
