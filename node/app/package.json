@@ -17,6 +17,9 @@
   "author": "W.A. (Andries)",
   "license": "MIT",
   "dependencies": {
+    "node-fftw": "^1.0.0",
+    "node-microphone": "^0.1.5",
+    "onoff": "^6.0.0",
     "serialport": "^9.0.0"
   }
 }
