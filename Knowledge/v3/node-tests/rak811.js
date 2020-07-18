@@ -80,7 +80,6 @@ console.log("RAK811 TEST");
 		await sendMsg("at+send=0,1,010203040506"); //Send unconfirmed on port 1 text: %5a
 		
 
-		
 		await sendMsg("at+signal");
 		// await sleep(10000);
 		//console.log("msg2");

@@ -124,8 +124,16 @@ module.exports = class{
         return result.substr(2);
     }
 
-    setConfig(values = {}) {
-        //TODO
+    setConfig(config = {}) {
+        let result = [];
+        const keys = Object.keys(config);
+        for(let i=0; i<keys.length; i++) {
+            result.push(keys[i] + ":" + config[keys[i]]);
+        }
+
+        result = result.join('&');
+        
+        return this._sendSerial("at+set_config=" + result, ["OK"]);
     }
 
     async getBand() {
@@ -138,11 +146,19 @@ module.exports = class{
     }
 
     joinABP() {
-        return this._sendSerial("at+abp" + band, ["OK"]);
+        return this._sendSerial("at+join=abp", ["OK"]);
     }
 
     async getSignalStrength() {
-        //TODO
+        let result = await this._sendSerial("at+signal", ["OK"]);
+        result = result.substr(2);
+        result = result.split(",");
+
+        result = {
+            rssi: parseFloat(result[0].trim()),
+            snr: parseFloat(result[1].trim())
+        };
+        return result;
     }
 
     async getDr() {
@@ -155,15 +171,36 @@ module.exports = class{
     }
 
     async getLinkCount() {
-        //TODO
+        let result = await this._sendSerial("at+link_cnt", ["OK"]);
+        result = result.substr(2);
+        result = result.split(",");
+
+        result = {
+            up: parseInt(result[0].trim()),
+            down: parseInt(result[1].trim())
+        };
+        return result;
     }
 
-    setLinkCount() {
-        //TODO
+    setLinkCount(up, down) {
+        return this._sendSerial("at+link_cnt=" + up + "," + down, ["OK"]);
     }
 
-    send() {
+    send(message, port=1, confirmed=false) {
+        let c = "0";
+        if(confirmed) {
+            c = "1";
+        }
 
+        let m = "";
+        for(let i=0; i<message.length; i++) {
+            var char = message.charCodeAt(i).toString(16);
+            if(char.length == 1) {
+                char = "0" + char;
+            }
+            m += char;
+        }
+        return this._sendSerial("at+send=0,1,010203040506", ["OK"]);
     }
 
     /*
