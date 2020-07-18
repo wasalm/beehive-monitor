@@ -464,7 +464,7 @@ void writeScreen() {
         succes = false;
       } else {
         U8X8_SSD1306_128X64_NONAME_HW_I2C * ptr = (U8X8_SSD1306_128X64_NONAME_HW_I2C * ) devPointer[id];
-        ptr -> drawString(x,y, &buffer[IDSTART + 4]);
+        ptr -> drawUTF8(x,y, &buffer[IDSTART + 4]);
       }
     }
   }
