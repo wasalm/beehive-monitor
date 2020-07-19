@@ -46,6 +46,7 @@ let test = new CL("/dev/serial0", { baudRate: 115200 });
     console.log("setConfig 2");
     await test.setConfig({
         public_net: "on",
+        ch_mask: "0,00A", // Single channel zero 0
         pwr_level: "0",
         dr: "0",
         duty: "off"
@@ -84,7 +85,7 @@ let test = new CL("/dev/serial0", { baudRate: 115200 });
     console.log(await test.getLinkCount());
     
 
-    await test.setLinkCount("Hello world", 1, false);
+    await test.send("Hello world", 1, false);
 
     await sleep(10000);
     await test.setMode(0);

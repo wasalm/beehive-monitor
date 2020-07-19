@@ -200,7 +200,61 @@ module.exports = class{
             }
             m += char;
         }
-        return this._sendSerial("at+send=0,1,010203040506", ["OK"]);
+        return this._sendSerial("at+send="+c+","+port+","+m, ["OK"]);
+    }
+
+    /*
+     * Lora P2P
+     */
+
+    rfConfig(freq = 868100000, sf = 12, bw = 0 /* 125 */, cr = 1 /* 4/5 */, prlen = 8, pwr = 20) {
+        return this._sendSerial("at+rf_config=" + freq + "," + sf + "," + bw + "," + cr + "," + prlen + "," + pwr, ["OK"]);
+    }
+
+    txContinue(count, interval, message) {
+        let m = "";
+        for(let i=0; i<message.length; i++) {
+            var char = message.charCodeAt(i).toString(16);
+            if(char.length == 1) {
+                char = "0" + char;
+            }
+            m += char;
+        }
+        return this._sendSerial("at+txc="+count+","+interval+","+m, ["OK"]);
+    }
+
+    rxContinue() {
+        return this._sendSerial("at+rxc=1", ["OK"]);
+    }
+
+    txStop() {
+        return this._sendSerial("at+tx_stop", ["OK"]);
+    }
+
+    rxStop() {
+        //at+rx_stop\r\n
+        return this._sendSerial("at+rx_stop", ["OK"]);
+    }
+
+    clearStatus() {
+        return this._sendSerial("at+status=0", ["OK"]);
+    }
+
+    async getStatus() {
+        let result = await this._sendSerial("at+status", ["OK"]);
+        result = result.substr(2);
+        result = result.split(",");
+
+        result = {
+            TxSuccessCnt: parseInt(result[0].trim()),
+            TxErrCnt: parseInt(result[1].trim()),
+            RxSuccessCnt: parseInt(result[1].trim()),
+            RxTimeOutCnt: parseInt(result[1].trim()),
+            RxErrCnt: parseInt(result[1].trim()),
+            Rssi: parseInt(result[1].trim()),
+            Snr: parseInt(result[1].trim()),
+        };
+        return result;
     }
 
     /*
