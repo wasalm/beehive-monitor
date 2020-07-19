@@ -21,9 +21,11 @@ module.exports = class{
      * General Functions
      */
 
-    _sendSerial(message, okResponses = [], ignoreResponses = []) {
+    _sendSerial(message, okResponses = ["OK"], ignoreResponses = ["Welcome", "Selected", "at+recv="]) {
         return new Promise((resolve, reject) => {
             const callback = (line) => {
+                line = line.trim().replace(/\0.*$/g,'');
+
                 for(let i=0; i < okResponses.length; i++) {
                     if(line.startsWith(okResponses[i])) {
                         this._parser.off('data', callback);
@@ -34,16 +36,12 @@ module.exports = class{
 
                 //Not Ok check if we may ignore
                 for(let i=0; i < ignoreResponses.length; i++) {
-                    if(line.trim() == "") {
+                    if(line == "") {
                         //Ignore
                         return;
                     }
 
-                    if(line.startsWith("at+recv=")) {
-                        //ignore incoming messages
-                        return;
-                    }
-
+                    console.log(">" . line);
                     if(line.startsWith(ignoreResponses[i])) {
                         //Ignore message
                         return;
@@ -82,33 +80,33 @@ module.exports = class{
     }
 
     softReset() {
-        return this._sendSerial("at+reset=0", ["OK"], ["Selected"]);
+        return this._sendSerial("at+reset=0");
     }
 
     async getVersion() {
-        let result = await this._sendSerial("at+version", ["OK"]);
+        let result = await this._sendSerial("at+version");
         return result.substr(2);
     }
 
     reload() {
-        return this._sendSerial("at+reload", ["OK"], ["Selected"]);
+        return this._sendSerial("at+reload");
     }
 
     setMode(mode) { // This will reset the device!
-        return this._sendSerial("at+mode=" + mode, ["OK"], ["Selected"]);
+        return this._sendSerial("at+mode=" + mode);
     }
 
     async getMode() {
-        let result = await this._sendSerial("at+mode", ["OK"]);
+        let result = await this._sendSerial("at+mode");
         return result.substr(2);
     }
 
     setRecvEx(mode) {
-        return this._sendSerial("at+recv_ex=" + mode, ["OK"]);
+        return this._sendSerial("at+recv_ex=" + mode);
     }
 
     async getRecvEx() {
-        let result = await this._sendSerial("at+recv_ex", ["OK"]);
+        let result = await this._sendSerial("at+recv_ex");
         return result.substr(2);
     }
 
@@ -120,7 +118,7 @@ module.exports = class{
      * For documentation see RAK811 AT commands v 1.5
      */
     async getConfig(key) {
-        let result = await this._sendSerial("at+get_config=" + key, ["OK"]);
+        let result = await this._sendSerial("at+get_config=" + key);
         return result.substr(2);
     }
 
@@ -133,24 +131,24 @@ module.exports = class{
 
         result = result.join('&');
         
-        return this._sendSerial("at+set_config=" + result, ["OK"]);
+        return this._sendSerial("at+set_config=" + result);
     }
 
     async getBand() {
-        let result = await this._sendSerial("at+band", ["OK"]);
+        let result = await this._sendSerial("at+band");
         return result.substr(2);
     }
 
     setBand(band) {
-        return this._sendSerial("at+band=" + band, ["OK"]);
+        return this._sendSerial("at+band=" + band);
     }
 
     joinABP() {
-        return this._sendSerial("at+join=abp", ["OK"]);
+        return this._sendSerial("at+join=abp");
     }
 
     async getSignalStrength() {
-        let result = await this._sendSerial("at+signal", ["OK"]);
+        let result = await this._sendSerial("at+signal");
         result = result.substr(2);
         result = result.split(",");
 
@@ -162,16 +160,16 @@ module.exports = class{
     }
 
     async getDr() {
-        let result = await this._sendSerial("at+dr", ["OK"]);
+        let result = await this._sendSerial("at+dr");
         return result.substr(2);
     }
 
     setDr(dr) {
-        return this._sendSerial("at+dr=" + dr, ["OK"]);
+        return this._sendSerial("at+dr=" + dr);
     }
 
     async getLinkCount() {
-        let result = await this._sendSerial("at+link_cnt", ["OK"]);
+        let result = await this._sendSerial("at+link_cnt");
         result = result.substr(2);
         result = result.split(",");
 
@@ -183,7 +181,7 @@ module.exports = class{
     }
 
     setLinkCount(up, down) {
-        return this._sendSerial("at+link_cnt=" + up + "," + down, ["OK"]);
+        return this._sendSerial("at+link_cnt=" + up + "," + down);
     }
 
     send(message, port=1, confirmed=false) {
@@ -200,7 +198,7 @@ module.exports = class{
             }
             m += char;
         }
-        return this._sendSerial("at+send="+c+","+port+","+m, ["OK"]);
+        return this._sendSerial("at+send="+c+","+port+","+m);
     }
 
     /*
@@ -208,7 +206,7 @@ module.exports = class{
      */
 
     rfConfig(freq = 868100000, sf = 12, bw = 0 /* 125 */, cr = 1 /* 4/5 */, prlen = 8, pwr = 20) {
-        return this._sendSerial("at+rf_config=" + freq + "," + sf + "," + bw + "," + cr + "," + prlen + "," + pwr, ["OK"]);
+        return this._sendSerial("at+rf_config=" + freq + "," + sf + "," + bw + "," + cr + "," + prlen + "," + pwr);
     }
 
     txContinue(count, interval, message) {
@@ -220,28 +218,28 @@ module.exports = class{
             }
             m += char;
         }
-        return this._sendSerial("at+txc="+count+","+interval+","+m, ["OK"]);
+        return this._sendSerial("at+txc="+count+","+interval+","+m);
     }
 
     rxContinue() {
-        return this._sendSerial("at+rxc=1", ["OK"]);
+        return this._sendSerial("at+rxc=1");
     }
 
     txStop() {
-        return this._sendSerial("at+tx_stop", ["OK"]);
+        return this._sendSerial("at+tx_stop");
     }
 
     rxStop() {
         //at+rx_stop\r\n
-        return this._sendSerial("at+rx_stop", ["OK"]);
+        return this._sendSerial("at+rx_stop");
     }
 
     clearStatus() {
-        return this._sendSerial("at+status=0", ["OK"]);
+        return this._sendSerial("at+status=0");
     }
 
     async getStatus() {
-        let result = await this._sendSerial("at+status", ["OK"]);
+        let result = await this._sendSerial("at+status");
         result = result.substr(2);
         result = result.split(",");
 
