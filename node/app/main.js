@@ -25,7 +25,7 @@ let lastResetLoop;
  * Main program
  */
 setup().then(() => {
-    setImmediate(loop);
+    setImmediate(main);
 });
 
 
@@ -46,29 +46,33 @@ async function setup() {
     lastResetLoop = process.uptime();
 }
 
-function loop() {
+function main() {
+    loop().then(() => {
+        setImmediate(main);
+    });
+}
+
+async function loop() {
     let now = process.uptime();
     if (now - lastScreenLoop > CONFIG.times.screen) {
-        updateScreen();
+        await updateScreen();
         lastScreenLoop = now;
     }
 
     if (now - lastMeasureloop > CONFIG.times.measurement) {
-        measure();
+        await measure();
         lastMeasureloop = now;
     }
 
     if (now - lastSendLoop > CONFIG.times.send / Object.keys(CONFIG.nodes).length) {
-        send();
+        await send();
         lastLoraLoop = now;
     }
 
     if (now - lastResetLoop > CONFIG.times.reset) {
-        reset();
+        await reset();
         lastMeasureloop = now;
     }
-
-    setImmediate(loop);
 }
 
 /*
@@ -98,22 +102,22 @@ async function setupLora() {
 
 async function setupDevices() {
     
-    for(let id=1; id<CONFIG.devices.length; id++) {
+    for(let id=0; id<CONFIG.devices.length; id++) {
         let device = CONFIG.devices[id];
         measurements[id] = [];
 
         switch(device.type) {
             case CONSTANTS.DEVICES.BME280:
-                await arduino.configureBME280(id);
+                await arduino.configureBME280(id+1);
                 break;
             case CONSTANTS.DEVICES.HX711:
-                await arduino.configureHX711(id, device.path);
+                await arduino.configureHX711(id+1, device.path);
                 break;
             case CONSTANTS.DEVICES.DS18B20:
-                await arduino.configureDS18B20(id, device.path);
+                await arduino.configureDS18B20(id+1, device.path);
                 break;
             case CONSTANTS.DEVICES.AUDIO:
-                deviceObjects[id] = new AudioClass(CONFIG.hardware.audio.device, CONFIG.hardware.audio.bitRate)
+                deviceObjects[id] = new AudioClass(CONFIG.hardware.audio.device, CONFIG.hardware.audio.bitRate);
                 break;
         }
     }
@@ -123,19 +127,40 @@ async function setupDevices() {
  * Loops
  */
 
-function updateScreen() {
+async function updateScreen() {
     console.log("TODO: updateScreen");
 }
 
-function measure() {
-    console.log("TODO: measure");
+async function measure() {
+    for(let id=0; id<CONFIG.devices.length; id++) {
+        let device = CONFIG.devices[id];
+
+        switch(device.type) {
+            case CONSTANTS.DEVICES.BME280:
+                measurements[id].push(await arduino.getBME280(id+1));
+                break;
+            case CONSTANTS.DEVICES.HX711:
+                measurements[id].push(await arduino.getHX711(id+1));
+                break;
+            case CONSTANTS.DEVICES.DS18B20:
+                measurements[id].push(await arduino.getDS18B20(id+1));
+                break;
+            case CONSTANTS.DEVICES.AUDIO:
+                measurements[id].push(await deviceObjects[id].getSample(CONFIG.hardware.audio.duration));
+                break;
+        }
+    }
+
+    global.gc();
+    // console.log(measurements);
+    console.log("TODO: write data to file");
 }
 
-function send() {
+async function send() {
     console.log("TODO: send");
 }
 
-function reset() {
+async function reset() {
     // Assume Watchdog will restart
     process.exit(0);
 }

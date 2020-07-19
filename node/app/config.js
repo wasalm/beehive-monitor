@@ -16,7 +16,8 @@ module.exports = {
 
         audio: {
             device: "plughw:1,0",
-            bitRate: 16000
+            bitRate: 16000,
+            duration: 0.1
         },
 
         rak811: {
