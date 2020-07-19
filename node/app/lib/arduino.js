@@ -14,6 +14,9 @@ module.exports = class{
         this._port = new SerialPort(path, options);
         this._parser = new Readline();
         this._port.pipe(this._parser);
+
+        // Allow data to be ignored...
+        this._parser.on('data', () => {});
     }
 
     /*
@@ -23,6 +26,8 @@ module.exports = class{
     _sendSerial(message, okResponse) {
         return new Promise((resolve, reject) => {
             const callback = (line) => {
+                line = line.trim().replace(/\0.*$/g,'');
+
                 if(line.startsWith(okResponse)) {
                     resolve(line);
                 } else {

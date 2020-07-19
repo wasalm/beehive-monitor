@@ -13,30 +13,37 @@ const Rak811Class = require("./lib/rak811.js");
  */
 let arduino = null;
 let rak811 = null;
-let measurements = null;
-let lastMeasurements = null;
+let measurements = [];
+let deviceObjects = [];
 
-let lastScreenLoop = process.uptime();
-let lastMeasureloop = process.uptime();
-let lastSendLoop = process.uptime();
-let lastResetLoop = process.uptime();
+let lastScreenLoop;
+let lastMeasureloop;
+let lastSendLoop;
+let lastResetLoop;
 
 /*
  * Main program
  */
-setup();
-setImmediate(loop);
+setup().then(() => {
+    setImmediate(loop);
+});
+
 
 /*
  * Main functions
  */
 
-function setup() {
+async function setup() {
     console.log("Beehive v2.0");
 
-    setupArduino();
-    setupDevices();
-    setupLora();
+    await setupArduino();
+    await setupDevices();
+    await setupLora();
+
+    lastScreenLoop = process.uptime();
+    lastMeasureloop = process.uptime();
+    lastSendLoop = process.uptime();
+    lastResetLoop = process.uptime();
 }
 
 function loop() {
@@ -89,8 +96,27 @@ async function setupLora() {
     await rak811.setBand("EU868");
 }
 
-function setupDevices() {
-    console.log("TODO: setupDevices");
+async function setupDevices() {
+    
+    for(let id=1; id<CONFIG.devices.length; id++) {
+        let device = CONFIG.devices[id];
+        measurements[id] = [];
+
+        switch(device.type) {
+            case CONSTANTS.DEVICES.BME280:
+                await arduino.configureBME280(id);
+                break;
+            case CONSTANTS.DEVICES.HX711:
+                await arduino.configureHX711(id, device.path);
+                break;
+            case CONSTANTS.DEVICES.DS18B20:
+                await arduino.configureDS18B20(id, device.path);
+                break;
+            case CONSTANTS.DEVICES.AUDIO:
+                deviceObjects[id] = new AudioClass(CONFIG.hardware.audio.device, CONFIG.hardware.audio.bitRate)
+                break;
+        }
+    }
 }
 
 /*

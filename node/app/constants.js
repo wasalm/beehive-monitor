@@ -6,11 +6,10 @@ module.exports = {
     },
 
     DEVICES: {
-        SSD1306: 1,
-        BME280: 2,
-        HX711: 3,
-        DS18B20: 4,
-        AUDIO: 5
+        BME280: 1,
+        HX711: 2,
+        DS18B20: 3,
+        AUDIO: 4
     },
 
     PATHS: {

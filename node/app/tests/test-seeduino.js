@@ -6,9 +6,7 @@ let test = new CL("/dev/ttyUSB0", { baudRate: 115200 });
 	await test.reset();
 	await test.configureSSD1306(0);
     
-    // await test.configureBME280(1);
-	// await test.configureHX711(2, "A0");
-    // await test.configureDS18B20(3, "D2");
+    
     
 	console.log(await test.getFreeMemory());
 	await test.emptyScreen(0);
