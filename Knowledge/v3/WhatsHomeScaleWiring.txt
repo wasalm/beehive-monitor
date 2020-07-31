@@ -1,0 +1,13 @@
+Seen from persons view:
+
+Top left & Top right:
+    Red -> Red(E+)
+    Black -> Black(E-)
+    White -> White(A-)
+    Green -> Green(A+)
+
+Bottom left & Bottom right:
+    Red -> Black(E-)
+    Black -> Red(E+)
+    White -> White(A-)
+    Green -> Green(A+)
