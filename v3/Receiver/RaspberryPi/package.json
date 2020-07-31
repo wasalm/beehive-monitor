@@ -1,17 +1,16 @@
 {
-    "name": "lora-gateway",
-    "version": "1.0.0",
-    "description": "Lora Gateway",
-    "main": "gateway.js",
-    "scripts": {
-      "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "author": "W.A. (Andries) Salm",
-    "license": "ISC",
-    "dependencies": {
-      "cayenne-lpp": "^1.0.2",
-      "lora-packet": "^0.7.14",
-      "serialport": "^9.0.0"
-    }
+  "name": "lora-gateway",
+  "version": "1.0.0",
+  "description": "Lora Gateway",
+  "main": "gateway.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "W.A. (Andries) Salm",
+  "license": "ISC",
+  "dependencies": {
+    "cayenne-lpp": "^1.0.2",
+    "lora-packet": "^0.7.14",
+    "serialport": "^9.0.0"
   }
-  
+}
