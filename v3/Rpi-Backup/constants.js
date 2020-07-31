@@ -1,4 +1,9 @@
 module.exports = {
+    NODES: {
+        WEATHER: "weather",
+        AUDIO: "audio",
+        GENERAL: "general"
+    },
 
     DEVICES: {
         BME280: 1,

@@ -4,7 +4,7 @@ module.exports = {
     times: { // In Seconds
         screen: 3,
         measurement: 10,
-        send: 75 * 60, // Will be devided by number of nodes
+        send: 10 * 60,
         reset: 24 * 60 * 60
     },
 
@@ -35,60 +35,9 @@ module.exports = {
         }
     },
 
-    nodes: {
-        weather: {
-            general: { //Special name
-                name: "Weather info",
-                dev_addr: "26011500",
-                nwks_key: "5D77C37101E7FDAC9C6D43397C164C05",
-                apps_key: "5C9354F9DACF6E62C051D7560F8E70F4"
-            },
-        },
-
-        audio: {
-            kast1: {
-                name: "Audio kast 1",
-                dev_addr: "26011500",
-                nwks_key: "5D77C37101E7FDAC9C6D43397C164C05",
-                apps_key: "5C9354F9DACF6E62C051D7560F8E70F4"
-            }
-        },
-
-        general: {
-            kast1: {
-                name: "Kast 1",
-                dev_addr: "26011500",
-                nwks_key: "5D77C37101E7FDAC9C6D43397C164C05",
-                apps_key: "5C9354F9DACF6E62C051D7560F8E70F4"
-            }
-        }
-    },
-
-    devices: [
-        // General
-        {
-            type: CONSTANTS.DEVICES.BME280,
-            path: CONSTANTS.PATHS.I2C,
-            node: CONSTANTS.NODES.WEATHER + ".general"
-        },
-
-        // Kast 1
-        {
-            type: CONSTANTS.DEVICES.HX711,
-            path: CONSTANTS.PATHS.A0,
-            node: CONSTANTS.NODES.GENERAL + ".kast1"
-        },
-        {
-            type: CONSTANTS.DEVICES.DS18B20,
-            path: CONSTANTS.PATHS.D2,
-            node: CONSTANTS.NODES.GENERAL + ".kast1"
-        },
-
-        //Audio (Kast 1)
-        {
-            type: CONSTANTS.DEVICES.AUDIO,
-            path: CONSTANTS.PATHS.AUDIO,
-            node: CONSTANTS.NODES.AUDIO + ".kast1"
-        }
-    ]
+    lora: {
+        dev_addr: "00011500",
+        nwks_key: "5D77C37101E7FDAC9C6D43397C164C05",
+        apps_key: "5C9354F9DACF6E62C051D7560F8E70F4"
+    }
 }

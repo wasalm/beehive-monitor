@@ -15,18 +15,16 @@ const Interface = require("./interface.js");
  */
 let arduino = null;
 let rak811 = null;
-let measurements = [];
-let deviceObjects = [];
+let devices = [];
 
-let currentInterface = {
-    type: 0,
-    device: 0
+let times = {
+    screen: -1,
+    measurement: -1,
+    send: -1,
+    reset: -1
 };
 
-let lastScreenLoop;
-let lastMeasureloop;
-let lastSendLoop;
-let lastResetLoop;
+let currentScreen = 0;
 
 /*
  * Main program
@@ -35,6 +33,11 @@ setup().then(() => {
     setImmediate(main);
 });
 
+function main() {
+    loop().then(() => {
+        setImmediate(main);
+    });
+}
 
 /*
  * Main functions
@@ -44,41 +47,35 @@ async function setup() {
     console.log("Beehive v2.0");
 
     await setupArduino();
-    await setupDevices();
     await setupLora();
+    await setupDevices();
 
-    lastScreenLoop = process.uptime();
-    lastMeasureloop = process.uptime();
-    lastSendLoop = process.uptime();
-    lastResetLoop = process.uptime();
-}
-
-function main() {
-    loop().then(() => {
-        setImmediate(main);
-    });
+    times.screen = process.uptime();
+    times.measurement = process.uptime();
+    times.send = process.uptime();
+    times.reset = process.uptime();
 }
 
 async function loop() {
     let now = process.uptime();
-    if (now - lastScreenLoop > CONFIG.times.screen) {
+    if (now - times.screen > CONFIG.times.screen) {
         await updateScreen();
-        lastScreenLoop = now;
+        times.screen = now;
     }
 
-    if (now - lastMeasureloop > CONFIG.times.measurement) {
+    if (now - times.measurement > CONFIG.times.measurement) {
         await measure();
-        lastMeasureloop = now;
+        times.measurement = now;
     }
 
-    if (now - lastSendLoop > CONFIG.times.send / Object.keys(CONFIG.nodes).length) {
+    if (now - times.send > CONFIG.times.send) {
         await send();
-        lastLoraLoop = now;
+        times.send = now;
     }
 
-    if (now - lastResetLoop > CONFIG.times.reset) {
+    if (now - times.reset > CONFIG.times.reset) {
         await reset();
-        lastMeasureloop = now;
+        times.reset = now;
     }
 }
 
@@ -95,6 +92,125 @@ async function setupArduino() {
     await arduino.writeScreen(0, 2, 2, "Beehive 2.0");
 }
 
+async function setupDevices() {
+    //Check for existence of BME280 Sensor
+    try {
+        await arduino.configureBME280(1);
+
+        devices.push({
+            type: CONSTANTS.DEVICES.BME280,
+            port: CONSTANTS.PATHS.I2C,
+            id: 1,
+            measurements: []
+        });
+
+    } catch(e) {
+        console.log("BME280 Not found at I2C");
+    }
+
+    // Digital Pins
+    for(let id = 2; id <= 7; id++) {
+        try {
+            await arduino.reset();
+            await arduino.configureDS18B20(id, "D" + id);
+
+            devices.push({
+                type: CONSTANTS.DEVICES.DS18B20,
+                port: "D" + id,
+                id: id,
+                measurements: []
+            });
+
+            console.log("DS18B20 found at D" + id);
+        } catch(e) {
+            console.log("DS18B20 not found at D" + id);
+        }
+
+        try {
+            await arduino.reset();
+            await arduino.configureHX711(id, "D" + id);
+
+            devices.push({
+                type: CONSTANTS.DEVICES.HX711,
+                port: "D" + id,
+                id: id,
+                measurements: []
+            });
+
+            id ++;
+
+            console.log("HX711 found at D" + id);
+        } catch(e) {
+            console.log("HX711 not found at D" + id);
+        }
+    }
+
+    for(let id = 0; id <= 2; id+=2) {
+        try {
+            await arduino.reset();
+            await arduino.configureDS18B20(id + 10, "A" + id);
+
+            devices.push({
+                type: CONSTANTS.DEVICES.DS18B20,
+                port: "A" + id,
+                id: id + 10,
+                measurements: []
+            });
+
+            console.log("DS18B2 found at A" + id);
+        } catch(e) {
+            console.log("DS18B20 not found at A" + id);
+        }
+
+        try {
+            await arduino.reset();
+            await arduino.configureHX711(id + 10, "A" + id);
+
+            devices.push({
+                type: CONSTANTS.DEVICES.HX711,
+                port: "A" + id,
+                id: id + 10,
+                measurements: []
+            });
+            console.log("HX711 found at A" + id);
+        } catch(e) {
+            console.log("HX711 not found at A" + id);
+        }
+    }
+
+    // Add audio device
+    devices.push({
+        type: CONSTANTS.DEVICES.AUDIO,
+        port: CONFIG.hardware.audio.device,
+        id: 20,
+        object: new AudioClass(CONFIG.hardware.audio.device, CONFIG.hardware.audio.bitRate),
+        measurements: []
+    });
+
+    //Restart arduino and configure devices
+    await arduino.reset();
+    await arduino.configureSSD1306(0); // Assume screen is always attached
+
+    for(let i = 0; i < devices.length; i++) {
+        let device = devices[i];
+        switch(device.type) {
+            case CONSTANTS.DEVICES.BME280:
+                await arduino.configureBME280(device.id);
+                break;
+            case CONSTANTS.DEVICES.HX711:
+                await arduino.configureHX711(device.id, device.port);
+                break;
+            case CONSTANTS.DEVICES.DS18B20:
+                await arduino.configureDS18B20(device.id, device.port);
+                break;
+            default:
+                //Ignore
+        }
+    }
+
+    console.log(devices);
+}
+
 async function setupLora() {
     rak811 = new Rak811Class(CONFIG.hardware.rak811.path, { baudRate: CONFIG.hardware.rak811.baudRate });
 
@@ -107,175 +223,56 @@ async function setupLora() {
     await rak811.setBand("EU868");
 }
 
-async function setupDevices() {
-
-    for (let id = 0; id < CONFIG.devices.length; id++) {
-        let device = CONFIG.devices[id];
-        measurements[id] = [];
-
-        switch (device.type) {
-            case CONSTANTS.DEVICES.BME280:
-                await arduino.configureBME280(id + 1);
-                break;
-            case CONSTANTS.DEVICES.HX711:
-                await arduino.configureHX711(id + 1, device.path);
-                break;
-            case CONSTANTS.DEVICES.DS18B20:
-                await arduino.configureDS18B20(id + 1, device.path);
-                break;
-            case CONSTANTS.DEVICES.AUDIO:
-                deviceObjects[id] = new AudioClass(CONFIG.hardware.audio.device, CONFIG.hardware.audio.bitRate);
-                break;
-        }
-    }
-}
-
 /*
  * Loops
  */
 
 async function updateScreen() {
-    let keys;
-    switch (currentInterface.type) {
+    switch (currentScreen) {
         case 0:
-            await Interface.displayLoraInfo(arduino, 0, (CONFIG.times.send / Object.keys(CONFIG.nodes).length) - (process.uptime() - lastSendLoop));
+            await Interface.displayLoraInfo(arduino, 0, CONFIG.times.send - (process.uptime() - times.send));
             break;
-        case 1:
-            keys = Object.keys(CONFIG.nodes.weather);
-            if (currentInterface.device < keys.length) {
-                // Screen does exist.
-                let key = CONSTANTS.NODES.WEATHER + "." + keys[currentInterface.device];
-
-                for (let id = 0; id < CONFIG.devices.length; id++) {
-                    if (CONFIG.devices[id].node == key && CONFIG.devices[id].type == CONSTANTS.DEVICES.BME280) {
-                        if (measurements[id].length == 0) {
-                            await Interface.displayWeatherInfo(arduino, 0);
-                        } else {
-                            let measurement = measurements[id][measurements[id].length - 1];
-                            await Interface.displayWeatherInfo(arduino, 0, measurement.humidity, measurement.pressure, measurement.temperature);
-                            break;
-                        }
-                    }
-                }
-            }
+        case 1: // BME280
+            await Interface.displayWeatherInfo(arduino, 0, devices);
             break;
-        case 2:
-            keys = Object.keys(CONFIG.nodes.general);
-            if (currentInterface.device < keys.length) {
-                // Screen does exist.
-                let key = CONSTANTS.NODES.GENERAL + "." + keys[currentInterface.device];
-                let props = [];
-
-                for (let id = 0; id < CONFIG.devices.length; id++) {
-                    if (CONFIG.devices[id].node == key) {
-                        switch (CONFIG.devices[id].type) {
-                            case CONSTANTS.DEVICES.HX711:
-                                if(measurements[id].length == 0) {
-                                    props.push({
-                                        label: "Mass",
-                                        value: "-",
-                                        unit: "kg"
-                                    }); 
-                                } else {
-                                    let measurement = measurements[id][measurements[id].length -1];
-                                    props.push({
-                                        label: "Mass",
-                                        value: Math.round(measurement.weight*10)/10,
-                                        unit: "kg"
-                                    }); 
-                                }
-                                break;
-                            case CONSTANTS.DEVICES.DS18B20:
-                                if(measurements[id].length == 0) {
-                                    props.push({
-                                        label: "Temp",
-                                        value: "-",
-                                        unit: "°C"
-                                    }); 
-                                } else {
-                                    let measurement = measurements[id][measurements[id].length -1];
-                                    props.push({
-                                        label: "Temp",
-                                        value: Math.round(measurement.temperature*10)/10,
-                                        unit: "°C"
-                                    }); 
-                                }
-                                break;
-                            default:
-                                //IGNORE
-                        }
-                    }
-                }
-
-                await Interface.displayHiveInfo(arduino, 0, CONFIG.nodes.general[keys[currentInterface.device]].name, props);
-            }
+        case 2: // HX711
+            await Interface.displayWeights(arduino, 0, devices);
             break;
-        case 3:
-            console.log("SHOW AUDIO");
+        case 3: // DS18B20
+            await Interface.displayTemperatures(arduino, 0, devices);
             break;
-        default:
+        case 4: //Audio;
+            await Interface.displayAudioInfo(arduino, 0, devices);
+            break;
     }
 
-    //TODO NEXT SCREEN
-    switch (currentInterface.type) {
-        case 0:
-            currentInterface.type = 1;
-            currentInterface.device = 0;
-            break;
-        case 1:
-            keys = Object.keys(CONFIG.nodes.weather);
-            currentInterface.device++;
-            if (currentInterface.device >= Object.keys(CONFIG.nodes.weather).length) {
-                currentInterface.type = 2;
-                currentInterface.device = 0;
-            }
-            break;
-        case 2:
-            keys = Object.keys(CONFIG.nodes.general);
-            currentInterface.device++;
-            if (currentInterface.device >= Object.keys(CONFIG.nodes.general).length) {
-                currentInterface.type = 3;
-                currentInterface.device = 0;
-            }
-            break;
-            break;
-        case 3:
-            //TODO
-            currentInterface.type = 0;
-            currentInterface.device = 0;
-            break;
-        default:
+    currentScreen ++;
+    if(currentScreen > 4) { 
+        currentScreen = 0;
     }
-
-    // currentInterface = {
-    //     type: 0,
-    //     device: 0
-    // };
 }
 
 async function measure() {
-    for (let id = 0; id < CONFIG.devices.length; id++) {
-        let device = CONFIG.devices[id];
-
-        switch (device.type) {
+    for(let i=0; i<devices.length; i++) {
+        switch(devices[i].type) {
             case CONSTANTS.DEVICES.BME280:
-                measurements[id].push(await arduino.getBME280(id + 1));
+                devices[i].measurements.push(await arduino.getBME280(devices[i].id));
                 break;
             case CONSTANTS.DEVICES.HX711:
-                measurements[id].push(await arduino.getHX711(id + 1));
+                devices[i].measurements.push(await arduino.getHX711(devices[i].id));
                 break;
             case CONSTANTS.DEVICES.DS18B20:
-                measurements[id].push(await arduino.getDS18B20(id + 1));
+                devices[i].measurements.push(await arduino.getDS18B20(devices[i].id));
                 break;
             case CONSTANTS.DEVICES.AUDIO:
-                measurements[id].push(await deviceObjects[id].getSample(CONFIG.hardware.audio.duration));
+                devices[i].measurements.push(await devices[i].object.getSample(CONFIG.hardware.audio.duration));
                 break;
+            default:
+                //Ignore
         }
-    }
 
-    global.gc();
-    // console.log(measurements);
-    console.log("TODO: write data to file");
+        global.gc();
+    }
 }
 
 async function send() {

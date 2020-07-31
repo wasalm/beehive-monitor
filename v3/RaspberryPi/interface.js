@@ -1,3 +1,5 @@
+const CONSTANTS = require("./constants.js");
+
 module.exports = {
     displayLoraInfo: async (dev, id, time = 0 /* in seconds */) => {
         await dev.emptyScreen(id);
@@ -21,7 +23,7 @@ module.exports = {
         await dev.writeScreen(id, 7, 5, h + ":" + m);
     },
 
-    displayWeatherInfo: async (dev, id, humm = -1, press = -1, temp = -1) => {
+    displayWeatherInfo: async (dev, id, devices) => {
         await dev.emptyScreen(id);
         await dev.writeScreen(id, 2, 2, "Weather info");
 
@@ -33,41 +35,86 @@ module.exports = {
         await dev.writeScreen(id, 13, 6, "kPa");
         await dev.writeScreen(id, 13, 7, "°C");
 
-        if(humm == -1) {
-            await dev.writeScreen(id, 7, 5, "-");
-        } else {
-            await dev.writeScreen(id, 7, 5, Math.round(humm * 10)/10);
+        for(let i=0; i<devices.length; i++) {
+            if(devices[i].type == CONSTANTS.DEVICES.BME280) {
+                if(devices[i].measurements.length == 0) {
+                    continue;
+                }
+                
+                let measurement = devices[i].measurements[devices[i].measurements.length - 1];
+                await dev.writeScreen(id, 7, 5, Math.round(measurement.humidity * 10)/10);
+                await dev.writeScreen(id, 7, 6, Math.round(measurement.pressure * 10/1000)/10);
+                await dev.writeScreen(id, 7, 7, Math.round(measurement.temperature * 10)/10);
+                
+                return;
+            }
         }
 
-        if(press == -1) {
-            await dev.writeScreen(id, 7, 6, "-");
-        } else {
-            await dev.writeScreen(id, 7, 6, Math.round(press * 10/1000)/10);
-        }
-
-        if(temp == -1) {
-            await dev.writeScreen(id, 7, 7, "-");
-        } else {
-            await dev.writeScreen(id, 7, 7, Math.round(temp * 10)/10);
-        }
+        // Noting found
+        await dev.writeScreen(id, 7, 5, "-");
+        await dev.writeScreen(id, 7, 6, "-");
+        await dev.writeScreen(id, 7, 7, "-");
     },
 
-    displayHiveInfo: async (dev, id, name, properties = []) => {
+
+    displayWeights: async (dev,id, devices) => {
         await dev.emptyScreen(id);
-        await dev.writeScreen(id, 2, 0, "Currently in");
-        await dev.writeScreen(id, Math.floor((16 - name.length)/2), 3, name);
+        await dev.writeScreen(id, 4, 1, "Weights");
+        
+        await dev.writeScreen(id, 0, 3, "Port");
+        await dev.writeScreen(id, 11, 3, "Value");
+        await dev.writeScreen(id, 6, 3, "|");
+        await dev.writeScreen(id, 0, 4, "----------------");
+        
+        await dev.writeScreen(id, 6, 5, "|");
+        await dev.writeScreen(id, 6, 6, "|");
+        await dev.writeScreen(id, 6, 7, "|");
 
-        let n = 7;
-        for(let i=properties.length-1; i >= 0; i--) {
-            let property = properties[i];
-            await dev.writeScreen(id, 0, n, property.label + ":");
-            await dev.writeScreen(id, 14, n, property.unit);
-            await dev.writeScreen(id, 8, n, property.value);
-            n--;
+        let n = 5;
+        for(let i=0; i<devices.length; i++) {
+            if(devices[i].type == CONSTANTS.DEVICES.HX711) {
+                await dev.writeScreen(id, 0, n, devices[i].port);
+
+                if(devices[i].measurements.length != 0) {
+                    let measurement = devices[i].measurements[devices[i].measurements.length - 1];
+
+                    await dev.writeScreen(id, 8, n, measurement.weight);
+                }
+                n++;
+            }
         }
     },
 
-    displayAudioInfo: async (dev, id, data) => {
+    displayTemperatures: async (dev,id, devices) => {
+        await dev.emptyScreen(id);
+        await dev.writeScreen(id, 2, 1, "Temperatures");
+        
+        await dev.writeScreen(id, 0, 3, "Port");
+        await dev.writeScreen(id, 11, 3, "Value");
+        await dev.writeScreen(id, 6, 3, "|");
+        await dev.writeScreen(id, 0, 4, "----------------");
+        
+        await dev.writeScreen(id, 6, 5, "|");
+        await dev.writeScreen(id, 6, 6, "|");
+        await dev.writeScreen(id, 6, 7, "|");
+
+        let n = 5;
+        for(let i=0; i<devices.length; i++) {
+            if(devices[i].type == CONSTANTS.DEVICES.DS18B20) {
+                await dev.writeScreen(id, 0, n, devices[i].port);
+
+                if(devices[i].measurements.length != 0) {
+                    let measurement = devices[i].measurements[devices[i].measurements.length - 1];
+
+                    await dev.writeScreen(id, 8, n, Math.round(measurement.temperature * 10)/10);
+                    await dev.writeScreen(id, 14, n, "°C");
+                }
+                n++;
+            }
+        }
+    },
+
+    displayAudioInfo: async (dev, id, devices) => {
         console.log("TODO: displayAudioInfo");
     },
 }
