@@ -14,7 +14,7 @@ void setup() {
     while (1);
   }
 
-  LoRa.setSyncWord(0x12); // ranges from 0-0xFF, default 0x34 = PUBLIC 0x12=P2P, see API docs
+  LoRa.setSyncWord(0x34); // ranges from 0-0xFF, default 0x34 = PUBLIC 0x12=P2P, see API docs
   LoRa.setSpreadingFactor(12);
   LoRa.setCodingRate4(5);
 }
