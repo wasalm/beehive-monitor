@@ -100,7 +100,7 @@ function parseWAV(bit, pos) {
                                 result.s_bin537_586 += val;
                         }
 
-			console.log(result);
+			console.log(Object.values(result).map(v => {return Math.log(v)}));
 			process.exit();
 		});
 		return true;

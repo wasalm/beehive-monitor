@@ -66,13 +66,14 @@ let test = new CL("/dev/ttyUSB0", { baudRate: 115200 });
     await test.emptyScreen(0);
     await test.writeScreen(0, 2, 1, "Audio Signal");
 
-    //sizes = \x9F -> 0x9D -> 0x91 -> 0x9E
+    //sizes = \x9E -> 0x91 -> 0x9F -> 0x9D
+    await dev.writeScreen(id, 2, 5, "\x9E\x91\x9F\x9D");
 
 
     //await test.writeScreen(0, 2, 5, "\x90 \x91 \x92 \x93 \x94 \x95");
     //await test.writeScreen(0, 2, 6, "\x96 \x97 \x98 \x99 \x9A \x9B");
-    await test.writeScreen(0, 2, 6, "  \x9D");
-    await test.writeScreen(0, 2, 7, "\x91 \x9D \x9E \x9F \x91 \x9D \x9E \x9F");
+    // await test.writeScreen(0, 2, 6, "  \x9D");
+    // await test.writeScreen(0, 2, 7, "\x91 \x9D \x9E \x9F \x91 \x9D \x9E \x9F");
 
     
 

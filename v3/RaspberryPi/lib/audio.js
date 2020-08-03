@@ -102,6 +102,18 @@ module.exports = class{
                                     result.s_bin537_586 += val;
                                 }
                             }
+                            
+                            result.s_tot = Math.log(result.s_tot);
+                            result.s_bin098_146 = Math.log(result.s_bin098_146);
+                            result.s_bin146_195 = Math.log(result.s_bin146_195);
+                            result.s_bin195_244 = Math.log(result.s_bin195_244);
+                            result.s_bin244_293 = Math.log(result.s_bin244_293);
+                            result.s_bin293_342 = Math.log(result.s_bin293_342);
+                            result.s_bin342_391 = Math.log(result.s_bin342_391);
+                            result.s_bin391_439 = Math.log(result.s_bin391_439);
+                            result.s_bin439_488 = Math.log(result.s_bin439_488);
+                            result.s_bin488_537 = Math.log(result.s_bin488_537);
+                            result.s_bin537_586 = Math.log(result.s_bin537_586);
 
                             micStream = null;
                             mic = null;
