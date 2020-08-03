@@ -27,6 +27,7 @@ let times = {
 };
 
 let currentScreen = 0;
+let currentSend = 0;
 
 /*
  * Main program
@@ -106,12 +107,12 @@ async function setupDevices() {
             measurements: []
         });
 
-    } catch(e) {
+    } catch (e) {
         console.log("BME280 Not found at I2C");
     }
 
     // Digital Pins
-    for(let id = 2; id <= 7; id++) {
+    for (let id = 2; id <= 7; id++) {
         try {
             await arduino.reset();
             await arduino.configureDS18B20(id, "D" + id);
@@ -124,7 +125,7 @@ async function setupDevices() {
             });
 
             console.log("DS18B20 found at D" + id);
-        } catch(e) {
+        } catch (e) {
             console.log("DS18B20 not found at D" + id);
         }
 
@@ -139,15 +140,15 @@ async function setupDevices() {
                 measurements: []
             });
 
-            id ++;
+            id++;
 
             console.log("HX711 found at D" + id);
-        } catch(e) {
+        } catch (e) {
             console.log("HX711 not found at D" + id);
         }
     }
 
-    for(let id = 0; id <= 2; id+=2) {
+    for (let id = 0; id <= 2; id += 2) {
         try {
             await arduino.reset();
             await arduino.configureDS18B20(id + 10, "A" + id);
@@ -160,7 +161,7 @@ async function setupDevices() {
             });
 
             console.log("DS18B2 found at A" + id);
-        } catch(e) {
+        } catch (e) {
             console.log("DS18B20 not found at A" + id);
         }
 
@@ -175,7 +176,7 @@ async function setupDevices() {
                 measurements: []
             });
             console.log("HX711 found at A" + id);
-        } catch(e) {
+        } catch (e) {
             console.log("HX711 not found at A" + id);
         }
     }
@@ -193,9 +194,9 @@ async function setupDevices() {
     await arduino.reset();
     await arduino.configureSSD1306(0); // Assume screen is always attached
 
-    for(let i = 0; i < devices.length; i++) {
+    for (let i = 0; i < devices.length; i++) {
         let device = devices[i];
-        switch(device.type) {
+        switch (device.type) {
             case CONSTANTS.DEVICES.BME280:
                 await arduino.configureBME280(device.id);
                 break;
@@ -206,7 +207,7 @@ async function setupDevices() {
                 await arduino.configureDS18B20(device.id, device.port);
                 break;
             default:
-                //Ignore
+            //Ignore
         }
     }
 
@@ -249,15 +250,15 @@ async function updateScreen() {
             break;
     }
 
-    currentScreen ++;
-    if(currentScreen > 4) { 
+    currentScreen++;
+    if (currentScreen > 4) {
         currentScreen = 0;
     }
 }
 
 async function measure() {
-    for(let i=0; i<devices.length; i++) {
-        switch(devices[i].type) {
+    for (let i = 0; i < devices.length; i++) {
+        switch (devices[i].type) {
             case CONSTANTS.DEVICES.BME280:
                 devices[i].measurements.push(await arduino.getBME280(devices[i].id));
                 break;
@@ -271,7 +272,7 @@ async function measure() {
                 devices[i].measurements.push(await devices[i].object.getSample(CONFIG.hardware.audio.duration));
                 break;
             default:
-                //Ignore
+            //Ignore
         }
 
         global.gc();
@@ -280,51 +281,80 @@ async function measure() {
 
 async function send() {
     let result = [];
+
     let average;
-    for(let i=0; i<devices.length; i++) {
-        switch(devices[i].type) {
-            case CONSTANTS.DEVICES.BME280:
-                average = getAverage(devices[i].measurements);
-                if(average !== null) {
-                    
-                    result.push(encoder.encodeRelativeHumidity(devices[i].id, average.humidity));
-                    result.push(encoder.encodeBarometricPressure(devices[i].id, average.pressure/100)); //Pa -> hPa
-                    result.push(encoder.encodeTemperature(devices[i].id, average.temperature));
+    if (currentSend == 0) {
+        for (let i = 0; i < devices.length; i++) {
+            switch (devices[i].type) {
+                case CONSTANTS.DEVICES.BME280:
+                    average = getAverage(devices[i].measurements);
+                    if (average !== null) {
 
-                    let lastVal = devices[i].measurements.pop();
-                    devices[i].measurements = [lastVal];
-                }
-            
-                break;
-    //         case CONSTANTS.DEVICES.HX711:
-    //             devices[i].measurements.push(await arduino.getHX711(devices[i].id));
-    //             break;
-            case CONSTANTS.DEVICES.DS18B20:
-                average = getAverage(devices[i].measurements);
-                if(average !== null) {
-                    
-                    result.push(encoder.encodeTemperature(devices[i].id, average.temperature));
+                        result.push(encoder.encodeRelativeHumidity(devices[i].id, average.humidity));
+                        result.push(encoder.encodeBarometricPressure(devices[i].id, average.pressure / 100)); //Pa -> hPa
+                        result.push(encoder.encodeTemperature(devices[i].id, average.temperature));
 
-                    let lastVal = devices[i].measurements.pop();
-                    devices[i].measurements = [lastVal];
-                }
-                break;
-    //         case CONSTANTS.DEVICES.AUDIO:
-    //             devices[i].measurements.push(await devices[i].object.getSample(CONFIG.hardware.audio.duration));
-    //             break;
-    //         default:
-    //             //Ignore
+                        let lastVal = devices[i].measurements.pop();
+                        devices[i].measurements = [lastVal];
+                    }
+
+                    break;
+                // encodeAnalogOutput
+                case CONSTANTS.DEVICES.HX711:
+                    average = getAverage(devices[i].measurements);
+                    if (average !== null) {
+
+                        result.push(encoder.encodeAnalogOutput(devices[i].id, average.weight / 1000));
+
+                        let lastVal = devices[i].measurements.pop();
+                        devices[i].measurements = [lastVal];
+                    }
+                    break;
+                case CONSTANTS.DEVICES.DS18B20:
+                    average = getAverage(devices[i].measurements);
+                    if (average !== null) {
+
+                        result.push(encoder.encodeTemperature(devices[i].id, average.temperature));
+
+                        let lastVal = devices[i].measurements.pop();
+                        devices[i].measurements = [lastVal];
+                    }
+                    break;
+                default:
+                //Ignore
+            }
+
         }
+    } else {
+        for (let i = 0; i < devices.length; i++) {
+            switch (devices[i].type) {
+                case CONSTANTS.DEVICES.AUDIO:
+                    average = Object.values(getAverage(devices[i].measurements));
+                    if (average !== null) {
+                        for (let j = 0; j < average.length; j++) {
+                            result.push(encoder.encodeAnalogInput(devices[i].id + j, average[j]));
+                        }
 
+                        let lastVal = devices[i].measurements.pop();
+                        devices[i].measurements = [lastVal];
+                    }
+                    break;
+                default:
+                //Ignore
+            }
+        }
     }
 
-    if(result.length != 0) {
+    if (result.length != 0) {
         result = Buffer.concat(result);
         //Send data
-        console.log("SEND DATA:");
+        console.log("SEND DATA with length " + result.length);
         console.log(result);
         await rak811.send(result, 1, false);
     }
+
+    //send two different kinds of data
+    currentSend = 1 - currentSend;
 }
 
 async function reset() {
@@ -339,18 +369,18 @@ function sleep(ms) {
 }
 
 function getAverage(data) {
-    if(data.length <= 1) {
+    if (data.length <= 1) {
         return null;
-    } 
+    }
 
     let result = Object.assign({}, data[0]);
     let keys = Object.keys(result);
 
-    for(let i=0; i< keys.length; i++) {
+    for (let i = 0; i < keys.length; i++) {
         let key = keys[i];
         result[key] = 0;
 
-        for(let j=0; j< data.length-1; j++) {
+        for (let j = 0; j < data.length - 1; j++) {
             result[key] += data[j][key];
         }
 

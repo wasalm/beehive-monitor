@@ -4,7 +4,7 @@ module.exports = {
     times: { // In Seconds
         screen: 3,
         measurement: 10,
-        send: 20, //test 10 * 60
+        send: 10 * 60,
         reset: 24 * 60 * 60
     },
 
@@ -29,9 +29,9 @@ module.exports = {
                 apps_key: "5C9354F9DACF6E62C051D7560F8E70F4",
                 pwr_level: "0",
                 adr: "off",
-                dr: "0",
+                dr: "3",
                 public_net: "on",
-                ch_mask: "0,00FF",
+                ch_mask: "0,0001",
                 duty: "off",
                 class: "0"
             }

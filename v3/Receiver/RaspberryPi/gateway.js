@@ -39,7 +39,7 @@ parser.on('data', (line) => {
                         let payload = LoraPacket.decrypt(packet, keys.AppSKey, keys.NwkSKey);
                         switch(packet.getMType()) {
                             case "Unconfirmed Data Up":
-                                handleUnconfirmedDataUp(payload, packet);
+                                handleUnconfirmedDataUp(payload, packet, RSSI, SNR);
                                 break;
                         }
                     } else {
@@ -55,7 +55,8 @@ parser.on('data', (line) => {
     }
 });
 
-function handleUnconfirmedDataUp(payload, packet) {
+function handleUnconfirmedDataUp(payload, packet, rssi, snr) {
+    console.log("RSSI: " + rssi + " SNR: " + snr);
     console.log("Decrypted (ASCII)='" + payload.toString() + "'");
     console.log("Decrypted (hex)='0x" + payload.toString('hex') + "'");
 
