@@ -195,7 +195,7 @@ module.exports = class{
 
         let m = "";
         for(let i=0; i<message.length; i++) {
-            var char = message.charCodeAt(i).toString(16);
+            var char = message[i].toString(16);
             if(char.length == 1) {
                 char = "0" + char;
             }

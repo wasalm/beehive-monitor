@@ -10,6 +10,8 @@ const Rak811Class = require("./lib/rak811.js");
 
 const Interface = require("./interface.js");
 
+const { encoder } = require('cayenne-lpp'); // See https://www.npmjs.com/package/cayenne-lpp
+
 /*
  * Global variables
  */
@@ -221,6 +223,7 @@ async function setupLora() {
     await rak811.setMode(0);
     await rak811.setConfig(CONFIG.hardware.rak811.config);
     await rak811.setBand("EU868");
+    await rak811.joinABP();
 }
 
 /*
@@ -276,7 +279,52 @@ async function measure() {
 }
 
 async function send() {
-    console.log("TODO: send");
+    let result = [];
+    let average;
+    for(let i=0; i<devices.length; i++) {
+        switch(devices[i].type) {
+            case CONSTANTS.DEVICES.BME280:
+                average = getAverage(devices[i].measurements);
+                if(average !== null) {
+                    
+                    result.push(encoder.encodeRelativeHumidity(devices[i].id, average.humidity));
+                    result.push(encoder.encodeBarometricPressure(devices[i].id, average.pressure/100)); //Pa -> hPa
+                    result.push(encoder.encodeTemperature(devices[i].id, average.temperature));
+
+                    let lastVal = devices[i].measurements.pop();
+                    devices[i].measurements = [lastVal];
+                }
+            
+                break;
+    //         case CONSTANTS.DEVICES.HX711:
+    //             devices[i].measurements.push(await arduino.getHX711(devices[i].id));
+    //             break;
+            case CONSTANTS.DEVICES.DS18B20:
+                average = getAverage(devices[i].measurements);
+                if(average !== null) {
+                    
+                    result.push(encoder.encodeTemperature(devices[i].id, average.temperature));
+
+                    let lastVal = devices[i].measurements.pop();
+                    devices[i].measurements = [lastVal];
+                }
+                break;
+    //         case CONSTANTS.DEVICES.AUDIO:
+    //             devices[i].measurements.push(await devices[i].object.getSample(CONFIG.hardware.audio.duration));
+    //             break;
+    //         default:
+    //             //Ignore
+        }
+
+    }
+
+    if(result.length != 0) {
+        result = Buffer.concat(result);
+        //Send data
+        console.log("SEND DATA:");
+        console.log(result);
+        await rak811.send(result, 1, false);
+    }
 }
 
 async function reset() {
@@ -288,5 +336,27 @@ function sleep(ms) {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
     });
+}
+
+function getAverage(data) {
+    if(data.length <= 1) {
+        return null;
+    } 
+
+    let result = Object.assign({}, data[0]);
+    let keys = Object.keys(result);
+
+    for(let i=0; i< keys.length; i++) {
+        let key = keys[i];
+        result[key] = 0;
+
+        for(let j=0; j< data.length-1; j++) {
+            result[key] += data[j][key];
+        }
+
+        result[key] /= (data.length - 1);
+    }
+
+    return result;
 }
 

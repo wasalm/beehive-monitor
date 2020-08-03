@@ -65,7 +65,7 @@ function handleUnconfirmedDataUp(payload, packet) {
 
 function getKeys(devAddr) {
     //Temporary:
-    if(devAddr == "26011500") {
+    if(devAddr == "00011500") {
         return {
            NwkSKey: Buffer.from('5D77C37101E7FDAC9C6D43397C164C05', 'hex'),
            AppSKey: Buffer.from('5C9354F9DACF6E62C051D7560F8E70F4', 'hex')
