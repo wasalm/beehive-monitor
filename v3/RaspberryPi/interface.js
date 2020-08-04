@@ -1,6 +1,10 @@
 const CONSTANTS = require("./constants.js");
 
 module.exports = {
+    displayPause: async (dev, id) => {
+        await dev.writeScreen(id, 0, 0, "-System Paused!-");
+    },
+
     displayLoraInfo: async (dev, id, time = 0 /* in seconds */) => {
         await dev.emptyScreen(id);
         await dev.writeScreen(id, 2, 2, "Next message");

@@ -61,6 +61,7 @@ async function setup() {
 
 async function loop() {
     let now = process.uptime();
+
     if (now - times.screen > CONFIG.times.screen) {
         await updateScreen();
         times.screen = now;
@@ -193,6 +194,7 @@ async function setupDevices() {
     //Restart arduino and configure devices
     await arduino.reset();
     await arduino.configureSSD1306(0); // Assume screen is always attached
+    await arduino.configureSwitch(16, "A6"); // Assume switch is always attached
 
     for (let i = 0; i < devices.length; i++) {
         let device = devices[i];
@@ -250,6 +252,10 @@ async function updateScreen() {
             break;
     }
 
+    if((await arduino.getSwitch(16)).value){
+        await Interface.displayPause(arduino, 0);
+    }
+
     currentScreen++;
     if (currentScreen > 4) {
         currentScreen = 0;
@@ -257,6 +263,11 @@ async function updateScreen() {
 }
 
 async function measure() {
+    if((await arduino.getSwitch(16)).value){
+        //Paused
+        return;
+    }
+
     for (let i = 0; i < devices.length; i++) {
         switch (devices[i].type) {
             case CONSTANTS.DEVICES.BME280:
@@ -329,8 +340,9 @@ async function send() {
         for (let i = 0; i < devices.length; i++) {
             switch (devices[i].type) {
                 case CONSTANTS.DEVICES.AUDIO:
-                    average = Object.values(getAverage(devices[i].measurements));
+                    average = getAverage(devices[i].measurements);
                     if (average !== null) {
+                        average = Object.values(average);
                         for (let j = 0; j < average.length; j++) {
                             result.push(encoder.encodeAnalogInput(devices[i].id + j, average[j]));
                         }

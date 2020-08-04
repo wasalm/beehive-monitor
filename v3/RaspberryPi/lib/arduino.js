@@ -93,6 +93,16 @@ module.exports = class{
         return  this._sendSerial("C" + idStr + port + "DS18B20", "C" + idStr + "1");
     }
 
+    configureSwitch(id, port) {
+        let idStr = "";
+        if(id < 10)
+            idStr += "0";
+
+        idStr += id;
+
+        return  this._sendSerial("C" + idStr + port + "SWITCH", "C" + idStr + "1");
+    }
+
     /* 
      * Get Commands
      */
@@ -133,6 +143,17 @@ module.exports = class{
 
         let result = await this._sendSerial("G" + idStr, "G" + idStr + "1T");
         return {temperature: parseFloat(result.substr(5))};
+    }
+
+    async getSwitch(id){
+        let idStr = "";
+        if(id < 10)
+            idStr += "0";
+
+        idStr += id;
+
+        let result = await this._sendSerial("G" + idStr, "G" + idStr + "1V");
+        return {value: result.substr(5) == "1"};
     }
 
     /*
