@@ -349,7 +349,7 @@ async function send() {
         result = Buffer.concat(result);
         //Send data
         console.log("SEND DATA with length " + result.length);
-        console.log(result);
+        // console.log(result);
         await rak811.send(result, 1, false);
     }
 
