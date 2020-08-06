@@ -1,2 +1,2 @@
 #!/bin/bash
-/usr/bin/node --expose-gc /home/pi/beehive/main.js
+/usr/bin/node --unhandled-rejections strict --expose-gc /home/pi/beehive/main.js
