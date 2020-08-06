@@ -39,7 +39,7 @@ let serial;
 })()
 
 
-function parsePayload(payload, rssi, snr) {
+async function parsePayload(payload, rssi, snr) {
     let packet = LoraPacket.fromWire(payload);
 
     if (packet.getMType() != "Unconfirmed Data Up") {
@@ -64,10 +64,10 @@ function parsePayload(payload, rssi, snr) {
 
     let data = LoraPacket.decrypt(packet, AppSKey, NwkSKey);
 
-    parseMessage(data, packet.getBuffers(), rssi, snr);
+    await parseMessage(data, packet.getBuffers(), rssi, snr);
 }
 
-function parseMessage(data, buffers, rssi, snr) {
+async function parseMessage(data, buffers, rssi, snr) {
     const cayenne = decoder.decode(data);
 
     let hives = Object.assign({}, CONFIG.hives);
@@ -105,7 +105,7 @@ function parseMessage(data, buffers, rssi, snr) {
             }
 
             if (quantity.startsWith("analog_output_")) {
-                hives[hive].push("w_v=" + encodeURIComponent(value * 1000));
+                hives[hive].push("w_v=" + encodeURIComponent(value));
             }
 
             // Audio
@@ -159,7 +159,15 @@ function parseMessage(data, buffers, rssi, snr) {
     for (let i = 0; i < keys.length; i++) {
         let hive = hives[keys[i]];
         if (hive.length > 3) {
-            let parameters = hive.join('&');
+            await send(hive);
+            await sleep(5000);
+        }
+    }
+}
+
+function send(hive) {
+    return new Promise((resolve, reject) => {
+        let parameters = hive.join('&');
 
             httpOptions.path = "/api/sensors?" + parameters;
 
@@ -169,16 +177,19 @@ function parseMessage(data, buffers, rssi, snr) {
                 res.on('data', (d) => {
                     process.stdout.write(d)
                 })
+
+                res.on('end', (error) => {
+                    resolve();
+                })
             })
 
             req.on('error', (error) => {
-                console.error(error)
+                reject(error);
             })
 
             req.write("")
             req.end()
-        }
-    }
+    }); 
 }
 
 function sleep(ms) {

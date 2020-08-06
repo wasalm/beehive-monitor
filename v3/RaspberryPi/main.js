@@ -316,7 +316,7 @@ async function send() {
                     average = getAverage(devices[i].measurements);
                     if (average !== null) {
 
-                        result.push(encoder.encodeAnalogOutput(devices[i].id, average.weight / 1000));
+                        result.push(encoder.encodeAnalogOutput(devices[i].id, average.weight / 10000));
 
                         let lastVal = devices[i].measurements.pop();
                         devices[i].measurements = [lastVal];
