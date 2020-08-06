@@ -385,7 +385,7 @@ void configureDevice()
 bool getHX711(int id)
 {
   HX711 *ptr = (HX711 *)devPointer[id];
-  if (ptr->is_ready())
+  if (ptr->wait_ready_timeout(1000))
   {
     double val = ptr->get_value();
     Serial.write('G');
