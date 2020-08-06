@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /*
  * Libraries
  */
@@ -252,7 +253,7 @@ async function updateScreen() {
             break;
     }
 
-    if((await arduino.getSwitch(16)).value){
+    if(!(await arduino.getSwitch(16)).value){
         await Interface.displayPause(arduino, 0);
     }
 
@@ -263,7 +264,7 @@ async function updateScreen() {
 }
 
 async function measure() {
-    if((await arduino.getSwitch(16)).value){
+    if(!(await arduino.getSwitch(16)).value){
         //Paused
         return;
     }

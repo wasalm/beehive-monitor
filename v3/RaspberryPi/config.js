@@ -4,7 +4,7 @@ module.exports = {
     times: { // In Seconds
         screen: 3,
         measurement: 10,
-        send: 10 * 60,
+        send: 5 * 60,
         reset: 24 * 60 * 60
     },
 

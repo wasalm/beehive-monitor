@@ -1,0 +1,14 @@
+[Unit]
+Description=Lora Gateway
+
+[Service]
+ExecStart=/home/pi/gateway/gateway.js
+Restart=always
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=NODE_ENV=production
+WorkingDirectory=/home/pi/gateway/
+
+[Install]
+WantedBy=multi-user.target
+
+#https://stackoverflow.com/questions/4681067/how-do-i-run-a-node-js-application-as-its-own-process/28542093#28542093

@@ -1,6 +1,7 @@
 module.exports = {
     serial: {
-        path: "/dev/tty.usbserial-1420",
+        // path: "/dev/tty.usbserial-1420",
+        path: "/dev/ttyUSB0",
         baudRate: 115200
     },
 

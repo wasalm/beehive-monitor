@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /*
  * Libraries
  */
@@ -104,7 +105,7 @@ function parseMessage(data, buffers, rssi, snr) {
             }
 
             if (quantity.startsWith("analog_output_")) {
-                hives[hive].push("w_v=" + encodeURIComponent(value));
+                hives[hive].push("w_v=" + encodeURIComponent(value * 1000));
             }
 
             // Audio
@@ -178,16 +179,6 @@ function parseMessage(data, buffers, rssi, snr) {
             req.end()
         }
     }
-
-    // w weight sum kg
-
-    // uint8_t addAnalogInput(uint8_t channel, float value);
-    // uint8_t addAnalogOutput(uint8_t channel, float value);
-
-
-    // uint8_t addRelativeHumidity(uint8_t channel, float rh);
-    // uint8_t addBarometricPressure(uint8_t channel, float hpa);
-
 }
 
 function sleep(ms) {
@@ -195,43 +186,3 @@ function sleep(ms) {
         setTimeout(resolve, ms);
     });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// function handleUnconfirmedDataUp(payload, packet, rssi, snr) {
-//     console.log("RSSI: " + rssi + " SNR: " + snr);
-//     console.log("Decrypted (ASCII)='" + payload.toString() + "'");
-//     console.log("Decrypted (hex)='0x" + payload.toString('hex') + "'");
-
-//     const json = JSON.stringify(decoder.decode(payload));
-//     console.log(json);
-// }
-
-// function getKeys(devAddr) {
-//     //Temporary:
-//     if(devAddr == "00011500") {
-//         return {
-//            NwkSKey: Buffer.from('5D77C37101E7FDAC9C6D43397C164C05', 'hex'),
-//            AppSKey: Buffer.from('5C9354F9DACF6E62C051D7560F8E70F4', 'hex')
-//         };
-//     } else {
-//         return null;
-//     }
-// }
