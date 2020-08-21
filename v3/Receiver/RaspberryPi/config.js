@@ -5,6 +5,11 @@ module.exports = {
         baudRate: 115200
     },
 
+    log: {
+        enabled: false,
+        path: "/home/pi/log-lora.txt"
+    },
+
     lora: {
         frequency: 868100000,
         spreadingFactor: 9,

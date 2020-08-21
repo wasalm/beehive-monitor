@@ -7,6 +7,7 @@ const SerialPort = require('serialport')
 const LoraPacket = require('lora-packet');
 const { decoder } = require('cayenne-lpp'); // See https://www.npmjs.com/package/cayenne-lpp
 const Readline = require('@serialport/parser-readline')
+const fs = require('fs');
 
 const ESP8266Class = require("./esp8266.js");
 const CONFIG = require("./config.js");
@@ -22,6 +23,11 @@ const httpOptions = {
 }
 
 let serial;
+
+let logStream = null;
+if (CONFIG.log.enabled) {
+    let logStream = fs.createWriteStream(CONFIG.log.path, { flags: 'a' });
+}
 
 (async () => {
     /*
@@ -69,6 +75,17 @@ async function parsePayload(payload, rssi, snr) {
 
 async function parseMessage(data, buffers, rssi, snr) {
     const cayenne = decoder.decode(data);
+
+    if (CONFIG.log.enabled) {
+        logStream.write(new Date().toISOString());
+        logStream.write("|");
+        logStream.write(rssi.toString());
+        logStream.write("|");
+        logStream.write(snr.toString());
+        logStream.write("|");
+        logStream.write(data.toString('hex'));
+        logStream.write("\n");
+    }
 
     let hives = Object.assign({}, CONFIG.hives);
     let keys = Object.keys(hives);
@@ -128,7 +145,7 @@ async function parseMessage(data, buffers, rssi, snr) {
             if (quantity == "analog_input_24") {
                 hives[hive].push("s_bin244_293Hz=" + encodeURIComponent(value));
             }
-            
+
             if (quantity == "analog_input_25") {
                 hives[hive].push("s_bin293_342Hz=" + encodeURIComponent(value));
             }
@@ -152,7 +169,7 @@ async function parseMessage(data, buffers, rssi, snr) {
             if (quantity == "analog_input_30") {
                 hives[hive].push("s_bin537_586Hz=" + encodeURIComponent(value));
             }
-            
+
         }
     }
 
@@ -169,27 +186,27 @@ function send(hive) {
     return new Promise((resolve, reject) => {
         let parameters = hive.join('&');
 
-            httpOptions.path = "/api/sensors?" + parameters;
+        httpOptions.path = "/api/sensors?" + parameters;
 
-            const req = https.request(httpOptions, (res) => {
-                console.log(`statusCode: ${res.statusCode}`)
+        const req = https.request(httpOptions, (res) => {
+            //console.log(`statusCode: ${res.statusCode}`)
 
-                res.on('data', (d) => {
-                    process.stdout.write(d)
-                })
-
-                res.on('end', (error) => {
-                    resolve();
-                })
+            res.on('data', (d) => {
+                //process.stdout.write(d)
             })
 
-            req.on('error', (error) => {
-                reject(error);
+            res.on('end', (error) => {
+                resolve();
             })
+        })
 
-            req.write("")
-            req.end()
-    }); 
+        req.on('error', (error) => {
+            reject(error);
+        })
+
+        req.write("")
+        req.end()
+    });
 }
 
 function sleep(ms) {
