@@ -26,7 +26,7 @@ let serial;
 
 let logStream = null;
 if (CONFIG.log.enabled) {
-    let logStream = fs.createWriteStream(CONFIG.log.path, { flags: 'a' });
+    logStream = fs.createWriteStream(CONFIG.log.path, { flags: 'a' });
 }
 
 (async () => {
