@@ -243,6 +243,36 @@ bool configureBME280(int id, int primaryAddress, int secondaryAddress)
   return true;
 }
 
+// Check existence HX711 with primary and secondary adress interchanged
+bool configureHX711_Alternative(int id, int primaryAddress, int secondaryAddress)
+{
+  if (primaryAddress == SCL)
+  {
+    Serial.println(F("EHX711 doesn't use i2c. Please select a different port."));
+    return false;
+  }
+
+  HX711 *scale = new HX711;
+
+  scale->begin(primaryAddress, secondaryAddress);
+  scale->power_down();
+  scale->power_up();
+
+  if (!scale->wait_ready_timeout(1000))
+  {
+    Serial.println(F("EThe HX711 sensor did not respond. Please check wiring."));
+    delete scale;
+    return false;
+  }
+
+  pinTaken[primaryAddress] = true;
+  pinTaken[secondaryAddress] = true;
+  devType[id] = HX711_DEV;
+  devPointer[id] = scale;
+
+  return true;
+}
+
 bool configureHX711(int id, int primaryAddress, int secondaryAddress)
 {
   if (primaryAddress == SCL)
@@ -259,9 +289,8 @@ bool configureHX711(int id, int primaryAddress, int secondaryAddress)
 
   if (!scale->wait_ready_timeout(1000))
   {
-    Serial.println(F("EThe HX711 sensor did not respond. Please check wiring."));
     delete scale;
-    return false;
+    return configureHX711_Alternative(id, primaryAddress, secondaryAddress);
   }
 
   pinTaken[primaryAddress] = true;

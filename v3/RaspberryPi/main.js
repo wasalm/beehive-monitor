@@ -114,7 +114,8 @@ async function setupDevices() {
     }
 
     // Digital Pins
-    for (let id = 2; id <= 7; id++) {
+    // Pins 2 - 4 are used for DS18B20 devices
+    for (let id = 2; id <= 4; id++) {
         try {
             await arduino.reset();
             await arduino.configureDS18B20(id, "D" + id);
@@ -130,43 +131,26 @@ async function setupDevices() {
         } catch (e) {
             console.log("DS18B20 not found at D" + id);
         }
+    }
 
-        try {
-            await arduino.reset();
-            await arduino.configureHX711(id, "D" + id);
+    // Pins 5 - 6 are used for HX711 device
+    try {
+        await arduino.reset();
+        await arduino.configureHX711(5, "D5");
 
-            devices.push({
-                type: CONSTANTS.DEVICES.HX711,
-                port: "D" + id,
-                id: id,
-                measurements: []
-            });
+        devices.push({
+            type: CONSTANTS.DEVICES.HX711,
+            port: "D5",
+            id: 5,
+            measurements: []
+        });
 
-            id++;
-
-            console.log("HX711 found at D" + id);
-        } catch (e) {
-            console.log("HX711 not found at D" + id);
-        }
+        console.log("HX711 found at D5");
+    } catch (e) {
+        console.log("HX711 not found at D5");
     }
 
     for (let id = 0; id <= 2; id += 2) {
-        try {
-            await arduino.reset();
-            await arduino.configureDS18B20(id + 10, "A" + id);
-
-            devices.push({
-                type: CONSTANTS.DEVICES.DS18B20,
-                port: "A" + id,
-                id: id + 10,
-                measurements: []
-            });
-
-            console.log("DS18B2 found at A" + id);
-        } catch (e) {
-            console.log("DS18B20 not found at A" + id);
-        }
-
         try {
             await arduino.reset();
             await arduino.configureHX711(id + 10, "A" + id);
@@ -177,6 +161,7 @@ async function setupDevices() {
                 id: id + 10,
                 measurements: []
             });
+
             console.log("HX711 found at A" + id);
         } catch (e) {
             console.log("HX711 not found at A" + id);
