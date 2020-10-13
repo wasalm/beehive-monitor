@@ -26,6 +26,23 @@ module.exports = {
         kast3: "cw6vdsafrzs0kwxc"
     },
 
+    virtualPins: {
+        "analog_output_kast_without_temp_compensation": {
+            offset: -26.47 * 0.23093,
+            scale: {
+                "analog_output_12": 0.23093,
+            }
+        },
+
+        "analog_output_kast_with_temp_compensation": {
+            offset: -27.1731945723215 * 0.23093,
+            scale: {
+                "analog_output_12": 1 * 0.23093,
+                "temperature_1": 0.0567086578494735 * 0.23093,
+            }
+        }   
+    },
+
     pinMap: {
         "temperature_1": "general",
         "relative_humidity_1": "general",
@@ -35,7 +52,8 @@ module.exports = {
         "analog_output_10": "kast1",
 
         "temperature_3": "kast2",
-        "analog_output_12": "kast2",
+        // "analog_output_12": "kast2", // For debugging purposes only
+        "analog_output_kast_with_temp_compensation": "kast3", // For debugging purposes only
 
         "temperature_4": "kast3",
         "analog_output_5": "kast3",
