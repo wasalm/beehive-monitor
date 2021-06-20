@@ -164,7 +164,7 @@ async function parseMessage(data, buffers, rssi, snr) {
             }
 
             if (quantity.startsWith("analog_output_")) {
-                hives[hive].push("w_v=" + encodeURIComponent(value));
+                hives[hive].push("weight_kg=" + encodeURIComponent(value));
             }
 
             // Audio
