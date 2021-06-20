@@ -13,7 +13,9 @@ let keys = [
     "relative_humidity_1",
     "barometric_pressure_1",
     "temperature_1",
-    "analog_output_12"
+    "analog_output_10",
+    "analog_output_12",
+    "analog_output_5",
 ];
 
 
@@ -52,6 +54,7 @@ readInterface.on('line', (line) => {
     // Payload
     let buffer = Buffer.from(line[3], 'hex');
     let payload = decoder.decode(buffer);
+
 
     for (let i = 0; i < payload.length; i++) {
         for(let j = 0; j< keys.length; j++) {
