@@ -68,7 +68,7 @@ module.exports = {
         "analog_output_5": "kast3",
         "analog_output_kast_without_temp_compensation": "kast3", // For debugging purposes only
 
-        "analog_input_20": "kast1",
+        //"analog_input_20": "kast1", // Ignore total sound
         "analog_input_21": "kast1",
         "analog_input_22": "kast1",
         "analog_input_23": "kast1",
