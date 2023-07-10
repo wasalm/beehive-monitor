@@ -24,6 +24,8 @@ int freeMemory()
 // BME280
 #include <Wire.h>
 #include <SparkFunBME280.h>
+#include <SHT85.h>
+#include "QMP6988.h"
 
 //SSD1306
 #include <U8g2lib.h>
@@ -52,11 +54,13 @@ enum device
   HX711_DEV,
   DS18B20_DEV,
   SWITCH_DEV,
+  BME280_REPLACEMENT_DEV,
 };
 
 #define MAX_DEVICES (20)
 
 void *devPointer[MAX_DEVICES];
+void *devPointer2[MAX_DEVICES];
 device devType[MAX_DEVICES];
 bool pinTaken[30];
 
@@ -69,6 +73,7 @@ void setup()
   for (size_t i = 0; i < MAX_DEVICES; i++)
   {
     devPointer[i] = nullptr;
+    devPointer2[i] = nullptr;
     devType[i] = NONE_DEV;
   }
 
@@ -243,6 +248,43 @@ bool configureBME280(int id, int primaryAddress, int secondaryAddress)
   return true;
 }
 
+bool configureBME280Replacement(int id, int primaryAddress, int secondaryAddress)
+{
+  if (primaryAddress != SCL)
+  {
+    Serial.println(F("EBME280 uses hardware i2c. please connect to different pin"));
+    return false;
+  }
+
+  SHT30 *sht30Ptr = new SHT30;
+  QMP6988 *qmp6988Ptr = new QMP6988;
+
+  // BME280 *bme280Ptr = new BME280;
+  // bme280Ptr->setI2CAddress(0x76);
+
+  if (sht30Ptr->begin() == false)
+  {
+    Serial.println(F("EThe SHT30 sensor did not respond. Please check wiring."));
+    delete sht30Ptr;
+    delete qmp6988Ptr;
+    return false;
+  }
+
+  if (qmp6988Ptr->init() == 0)
+  {
+    Serial.println(F("EThe QMP6988 sensor did not respond. Please check wiring."));
+    delete sht30Ptr;
+    delete qmp6988Ptr;
+    return false;
+  }
+
+  devType[id] = BME280_REPLACEMENT_DEV;
+  devPointer[id] = sht30Ptr;
+  devPointer2[id] = qmp6988Ptr;
+
+  return true;
+}
+
 // Check existence HX711 with primary and secondary adress interchanged
 bool configureHX711_Alternative(int id, int primaryAddress, int secondaryAddress)
 {
@@ -369,10 +411,18 @@ void configureDevice()
     // Pins are now well defined.
     // Now we iterate all devices
 
+    // if (!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("BME280")) == 0)
+    // {
+    //   deviceFound = true;
+    //   succes = configureBME280(id, primaryAddress, secondaryAdddress);
+    // }
+
+    // We will use the M5Stack ENV III module as a replacement for the BME280.
+    // To keep compatability with old code, we still call it BME280.
     if (!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("BME280")) == 0)
     {
       deviceFound = true;
-      succes = configureBME280(id, primaryAddress, secondaryAdddress);
+      succes = configureBME280Replacement(id, primaryAddress, secondaryAdddress);
     }
 
     if (!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("SSD1306")) == 0)
@@ -447,6 +497,33 @@ bool getBME280(int id)
 
   Serial.write('T');
   Serial.print(ptr->readTempC(), DEC);
+
+  Serial.println();
+  return true;
+}
+
+bool getBME280Replacement(int id)
+{
+  SHT30 *sht30Ptr = (SHT30 *) devPointer[id];
+  QMP6988 *qmp6988Ptr = (QMP6988 *) devPointer2[id];
+
+  if(!sht30Ptr -> read()) {
+    return false;
+  }
+  
+  Serial.write('G');
+  Serial.write(buffer[IDSTART + 0]);
+  Serial.write(buffer[IDSTART + 1]);
+  Serial.write('1');
+
+  Serial.write('H');
+  Serial.print(sht30Ptr->getHumidity(), DEC);
+
+  Serial.write('P');
+  Serial.print(qmp6988Ptr->calcPressure(), DEC);
+
+  Serial.write('T');
+  Serial.print(sht30Ptr->getTemperature(), DEC);
 
   Serial.println();
   return true;
@@ -530,6 +607,9 @@ void getData()
       break;
     case SWITCH_DEV:
       succes = getSwitch(id);
+      break;
+    case BME280_REPLACEMENT_DEV:
+      succes = getBME280Replacement(id);
       break;
     default:
       Serial.println(F("ENo device is configured for this id"));
