@@ -27,15 +27,15 @@ module.exports = {
     },
 
     virtualPins: {
-        "analog_output_kast_without_temp_compensation": {
-            offset: -26.47 * 0.23093,
-            scale: {
-                "analog_output_10": 0.23093,
-            }
-        },
+        // "analog_output_kast_without_temp_compensation": {
+        //     offset: -26.47 * 0.23093,
+        //     scale: {
+        //         "analog_output_10": 0.23093,
+        //     }
+        // },
 
         "analog_output_kast_with_temp_compensation": {
-            offset: -27.1731945723215 * 0.23093,
+            offset: -27.1731945723215 * 0.23093 + 0.85,
             scale: {
                 "analog_output_10": 1 * 0.23093,
                 "temperature_1": 0.0296711404345529 * 0.23093, //0.0567086578494735 * 0.23093,
@@ -47,6 +47,14 @@ module.exports = {
             scale: {
                 "analog_output_12": 1 * 0.224858907701195,
                 "temperature_3": -0.0118919207845805 * 0.224858907701195
+            }
+        },
+
+        "analog_output_kast3_with_temp_compensation": {
+            offset: -23.624230096609 * 0.224858907701195,
+            scale: {
+                "analog_output_5": 1 * 0.224858907701195,
+                "temperature_4": -0.0118919207845805 * 0.224858907701195
             }
         }
     },
@@ -65,8 +73,9 @@ module.exports = {
         "analog_output_kast2_with_temp_compensation": "kast2",
 
         "temperature_4": "kast3",
-        "analog_output_5": "kast3",
-        "analog_output_kast_without_temp_compensation": "kast3", // For debugging purposes only
+        // "analog_output_5": "kast3",
+        // "analog_output_kast_without_temp_compensation": "kast3", // For debugging purposes only
+        "analog_output_kast3_with_temp_compensation": "kast3",
 
         //"analog_input_20": "kast1", // Ignore total sound
         "analog_input_21": "kast1",

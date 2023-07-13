@@ -7,12 +7,12 @@
 #define QMP6988_SLAVE_ADDRESS_L (0x70)
 #define QMP6988_SLAVE_ADDRESS_H (0x56)
 
-#define QMP6988_U16_t unsigned short
-#define QMP6988_S16_t short
-#define QMP6988_U32_t unsigned int
-#define QMP6988_S32_t int
-#define QMP6988_U64_t unsigned long long
-#define QMP6988_S64_t long long
+#define QMP6988_U16_t uint16_t
+#define QMP6988_S16_t int16_t
+#define QMP6988_U32_t uint32_t
+#define QMP6988_S32_t int32_t
+#define QMP6988_U64_t uint64_t
+#define QMP6988_S64_t int64_t
 
 #define QMP6988_CHIP_ID 0x5C
 
