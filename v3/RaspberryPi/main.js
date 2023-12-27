@@ -287,8 +287,11 @@ async function send() {
                     average = getAverage(devices[i].measurements);
                     if (average !== null) {
 
-                        result.push(encoder.encodeRelativeHumidity(devices[i].id, average.humidity));
-                        result.push(encoder.encodeBarometricPressure(devices[i].id, average.pressure / 100)); //Pa -> hPa
+                        /* 
+                         * BUGFIX: new ENV module gives garbled humidity and/or pressure data. Hence ignore.
+                         */
+                        //result.push(encoder.encodeRelativeHumidity(devices[i].id, average.humidity));
+                        //result.push(encoder.encodeBarometricPressure(devices[i].id, average.pressure / 100)); //Pa -> hPa
                         result.push(encoder.encodeTemperature(devices[i].id, average.temperature));
 
                         let lastVal = devices[i].measurements.pop();
