@@ -97,10 +97,9 @@ function addVirtualPins(lpp) {
 
 function generatePostBodies(lpp, chirpstack) {
     let hives = Object.assign({}, CONFIG.hives);
-    let hivesKeys = Object.keys(hives);
-    let lppKeys = Object.keys(lpp);
 
     // Make arrays and put general LoRa information in all of them
+    let hivesKeys = Object.keys(hives);
     for (let i = 0; i < hivesKeys.length; i++) {
         hives[hivesKeys[i]] = [
             'key=' + encodeURIComponent(CONFIG.hives[hivesKeys[i]]),
@@ -109,79 +108,81 @@ function generatePostBodies(lpp, chirpstack) {
         ];
     }
 
-    for (let i = 0; i < lppKeys.length; i++) {
-        let quantity = lppKeys[i];
-        let value = lpp[quantity];
+    for (const [hive, pinmap] of Object.entries(CONFIG.pinMap)) {
+        for (let i = 0; i < pinmap.length; i++) {
+            let quantity = pinmap[i];
 
-        if (quantity in CONFIG.pinMap) {
-            let hive = CONFIG.pinMap[quantity];
+            if (typeof lpp[quantity] != "undefined") {
+                let value = lpp[quantity];
 
-            if (quantity.startsWith("temperature_")) {
-                if (hive == "general") {
+                if (quantity == "temperature_1") {
                     hives[hive].push("t=" + encodeURIComponent(value));
                 } else {
-                    hives[hive].push("t_i=" + encodeURIComponent(value));
+                    if (quantity.startsWith("temperature_")) {
+                        hives[hive].push("t_i=" + encodeURIComponent(value));
+                    }
                 }
-            }
 
-            if (quantity.startsWith("barometric_pressure_")) {
-                hives[hive].push("p=" + encodeURIComponent(value));
-            }
+                if (quantity.startsWith("barometric_pressure_")) {
+                    hives[hive].push("p=" + encodeURIComponent(value));
+                }
 
-            if (quantity.startsWith("relative_humidity_")) {
-                hives[hive].push("h=" + encodeURIComponent(value));
-            }
+                if (quantity.startsWith("relative_humidity_")) {
+                    hives[hive].push("h=" + encodeURIComponent(value));
+                }
 
-            if (quantity.startsWith("analog_output_")) {
-                hives[hive].push("weight_kg=" + encodeURIComponent(value));
-            }
+                if (quantity.startsWith("analog_output_")) {
+                    hives[hive].push("weight_kg=" + encodeURIComponent(value));
+                }
 
-            // Audio
-            if (quantity == "analog_input_20") {
-                hives[hive].push("s_tot=" + encodeURIComponent(value));
-            }
+                // Audio
+                if (quantity == "analog_input_20") {
+                    hives[hive].push("s_tot=" + encodeURIComponent(value));
+                }
 
-            if (quantity == "analog_input_21") {
-                hives[hive].push("s_bin098_146Hz=" + encodeURIComponent(value));
-            }
+                if (quantity == "analog_input_21") {
+                    hives[hive].push("s_bin098_146Hz=" + encodeURIComponent(value));
+                }
 
-            if (quantity == "analog_input_22") {
-                hives[hive].push("s_bin146_195Hz=" + encodeURIComponent(value));
-            }
+                if (quantity == "analog_input_22") {
+                    hives[hive].push("s_bin146_195Hz=" + encodeURIComponent(value));
+                }
 
-            if (quantity == "analog_input_23") {
-                hives[hive].push("s_bin195_244Hz=" + encodeURIComponent(value));
-            }
+                if (quantity == "analog_input_23") {
+                    hives[hive].push("s_bin195_244Hz=" + encodeURIComponent(value));
+                }
 
-            if (quantity == "analog_input_24") {
-                hives[hive].push("s_bin244_293Hz=" + encodeURIComponent(value));
-            }
+                if (quantity == "analog_input_24") {
+                    hives[hive].push("s_bin244_293Hz=" + encodeURIComponent(value));
+                }
 
-            if (quantity == "analog_input_25") {
-                hives[hive].push("s_bin293_342Hz=" + encodeURIComponent(value));
-            }
+                if (quantity == "analog_input_25") {
+                    hives[hive].push("s_bin293_342Hz=" + encodeURIComponent(value));
+                }
 
-            if (quantity == "analog_input_26") {
-                hives[hive].push("s_bin342_391Hz=" + encodeURIComponent(value));
-            }
+                if (quantity == "analog_input_26") {
+                    hives[hive].push("s_bin342_391Hz=" + encodeURIComponent(value));
+                }
 
-            if (quantity == "analog_input_27") {
-                hives[hive].push("s_bin391_439Hz=" + encodeURIComponent(value));
-            }
+                if (quantity == "analog_input_27") {
+                    hives[hive].push("s_bin391_439Hz=" + encodeURIComponent(value));
+                }
 
-            if (quantity == "analog_input_28") {
-                hives[hive].push("s_bin439_488Hz=" + encodeURIComponent(value));
-            }
+                if (quantity == "analog_input_28") {
+                    hives[hive].push("s_bin439_488Hz=" + encodeURIComponent(value));
+                }
 
-            if (quantity == "analog_input_29") {
-                hives[hive].push("s_bin488_537Hz=" + encodeURIComponent(value));
-            }
+                if (quantity == "analog_input_29") {
+                    hives[hive].push("s_bin488_537Hz=" + encodeURIComponent(value));
+                }
 
-            if (quantity == "analog_input_30") {
-                hives[hive].push("s_bin537_586Hz=" + encodeURIComponent(value));
+                if (quantity == "analog_input_30") {
+                    hives[hive].push("s_bin537_586Hz=" + encodeURIComponent(value));
+                }
             }
         }
     }
+
     return hives;
 }
 

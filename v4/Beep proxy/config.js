@@ -6,7 +6,7 @@ module.exports = {
     },
 
     hives: {
-        general: "qgbutbmtj15b4yc0",
+        // general: "qgbutbmtj15b4yc0",
         kast1: "f6zdkdmnfqsflmmp",
         kast2: "zvbe6xt2udnzud0f",
         kast3: "cw6vdsafrzs0kwxc"
@@ -46,33 +46,46 @@ module.exports = {
     },
 
     pinMap: {
-        "temperature_1": "general",
-        "relative_humidity_1": "general",
-        "barometric_pressure_1": "general",
+        "kast1": [
+            "temperature_1",
+            "relative_humidity_1",
+            "barometric_pressure_1",
 
-        "temperature_2": "kast1",
-        // "analog_output_10": "kast1",
-        "analog_output_kast_with_temp_compensation": "kast1",
+            "temperature_2",
+            // "analog_output_10",
+            "analog_output_kast_with_temp_compensation",
 
-        "temperature_3": "kast2",
-        // "analog_output_12": "kast2",
-        "analog_output_kast2_with_temp_compensation": "kast2",
+            // "analog_input_20", // Ignore total sound
+            "analog_input_21",
+            "analog_input_22",
+            "analog_input_23",
+            "analog_input_24",
+            "analog_input_25",
+            "analog_input_26",
+            "analog_input_27",
+            "analog_input_28",
+            "analog_input_29",
+            "analog_input_30"
+        ],
 
-        "temperature_4": "kast3",
-        // "analog_output_5": "kast3",
-        // "analog_output_kast_without_temp_compensation": "kast3", // For debugging purposes only
-        "analog_output_kast3_with_temp_compensation": "kast3",
+        "kast2": [
+            "temperature_1",
+            "relative_humidity_1",
+            "barometric_pressure_1",
 
-        //"analog_input_20": "kast1", // Ignore total sound
-        "analog_input_21": "kast1",
-        "analog_input_22": "kast1",
-        "analog_input_23": "kast1",
-        "analog_input_24": "kast1",
-        "analog_input_25": "kast1",
-        "analog_input_26": "kast1",
-        "analog_input_27": "kast1",
-        "analog_input_28": "kast1",
-        "analog_input_29": "kast1",
-        "analog_input_30": "kast1"
+            "temperature_3",
+            // "analog_output_12",
+            "analog_output_kast2_with_temp_compensation"
+        ],
+
+        "kast3": [
+            "temperature_1",
+            "relative_humidity_1",
+            "barometric_pressure_1",
+
+            "temperature_4",
+            // "analog_output_5"
+            "analog_output_kast3_with_temp_compensation"
+        ]
     }
 }
