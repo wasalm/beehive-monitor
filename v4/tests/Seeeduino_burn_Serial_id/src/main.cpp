@@ -4,8 +4,6 @@
 char randomHex() {
   int val = random(0,16);
 
-
-  Serial.println(val);
   if(val > 9) {
     return 'a' - 10 + val;
   } else {

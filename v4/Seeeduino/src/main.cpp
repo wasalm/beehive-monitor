@@ -55,7 +55,7 @@ enum device
   HX711_DEV,
   DS18B20_DEV,
   SWITCH_DEV,
-  BME280_REPLACEMENT_DEV,
+  QMP6988_DEV,
 };
 
 #define MAX_DEVICES (20)
@@ -249,7 +249,7 @@ bool configureBME280(int id, int primaryAddress, int secondaryAddress)
   return true;
 }
 
-bool configureBME280Replacement(int id, int primaryAddress, int secondaryAddress)
+bool configureQMP6988(int id, int primaryAddress, int secondaryAddress)
 {
   if (primaryAddress != SCL)
   {
@@ -259,9 +259,6 @@ bool configureBME280Replacement(int id, int primaryAddress, int secondaryAddress
 
   SHT30 *sht30Ptr = new SHT30;
   QMP6988 *qmp6988Ptr = new QMP6988;
-
-  // BME280 *bme280Ptr = new BME280;
-  // bme280Ptr->setI2CAddress(0x76);
 
   if (sht30Ptr->begin() == false)
   {
@@ -279,7 +276,7 @@ bool configureBME280Replacement(int id, int primaryAddress, int secondaryAddress
     return false;
   }
 
-  devType[id] = BME280_REPLACEMENT_DEV;
+  devType[id] = QMP6988_DEV;
   devPointer[id] = sht30Ptr;
   devPointer2[id] = qmp6988Ptr;
 
@@ -412,18 +409,18 @@ void configureDevice()
     // Pins are now well defined.
     // Now we iterate all devices
 
-    // if (!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("BME280")) == 0)
-    // {
-    //   deviceFound = true;
-    //   succes = configureBME280(id, primaryAddress, secondaryAdddress);
-    // }
-
-    // We will use the M5Stack ENV III module as a replacement for the BME280.
-    // To keep compatability with old code, we still call it BME280.
     if (!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("BME280")) == 0)
     {
       deviceFound = true;
-      succes = configureBME280Replacement(id, primaryAddress, secondaryAdddress);
+      succes = configureBME280(id, primaryAddress, secondaryAdddress);
+    }
+
+    // We will use the M5Stack ENV III module as a replacement for the BME280.
+    // To keep compatability with old code, we still call it BME280.
+    if (!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("QMP6988")) == 0)
+    {
+      deviceFound = true;
+      succes = configureQMP6988(id, primaryAddress, secondaryAdddress);
     }
 
     if (!deviceFound && strcmp_P(&buffer[MESSAGESTART], PSTR("SSD1306")) == 0)
@@ -503,7 +500,7 @@ bool getBME280(int id)
   return true;
 }
 
-bool getBME280Replacement(int id)
+bool getQMP6988(int id)
 {
   SHT30 *sht30Ptr = (SHT30 *) devPointer[id];
   QMP6988 *qmp6988Ptr = (QMP6988 *) devPointer2[id];
@@ -511,6 +508,7 @@ bool getBME280Replacement(int id)
   if(!sht30Ptr -> read()) {
     return false;
   }
+
   
   Serial.write('G');
   Serial.write(buffer[IDSTART + 0]);
@@ -609,8 +607,8 @@ void getData()
     case SWITCH_DEV:
       succes = getSwitch(id);
       break;
-    case BME280_REPLACEMENT_DEV:
-      succes = getBME280Replacement(id);
+    case QMP6988_DEV:
+      succes = getQMP6988(id);
       break;
     default:
       Serial.println(F("ENo device is configured for this id"));
