@@ -1,0 +1,105 @@
+Communication between Rpi -> Arduino:
+
+   Reset:
+      R\n
+
+   Get Serial Id:
+
+      S\n
+
+   Configure Device:
+
+      Variable length:
+         1: 'C'
+         2 - 3: Device Id
+         4 - 5: Primary port, in capital, if i2c write 'II'
+         6 - (n-1): name of device, can be:
+            BME280
+            SSD1306
+            HX711
+            DS18B20
+         n: '\n'
+
+   Retreive data:
+
+      4 bytes: 
+         1: 'G'
+         2-3: Device Id 
+         4: '\n'
+
+      Example:
+      GD4\n
+
+   Set Font request: (NOT implemented)
+
+      'FXXYYY\n' where XX is the ID and Y is name of font
+
+   Empty display request:
+
+      'EXX\n' where XX is the ID
+
+   Draw string request:
+
+      'WXXYZWW...W\n' where XX is the ID and Y is the x position in HEX, Z is the y position in hex and WW...WW is the string
+      X is between 0 and 15(F) and Y is between 0 and 7.
+      Request can be at most 255 long (incl. new line)
+
+   Request free memory:
+      'M\n:'
+
+Communication between Arduino -> Rpi
+
+   Reset response:
+      "R\n";
+   
+   Error response:
+
+      Variable length:
+      Starts with 'E' and ends with '\n'
+      Between is readable string.
+
+   Configure response:
+
+      5 bytes: 
+         1: 'C'
+         2-3: Device Id
+         4: 0 fail, 1 succes
+         5: '\n'
+      
+   Get response:
+
+      Starts with 'GXXY\n' where XX is the ID and Y is 0/1 for succes and fail
+      After that data will be returned starting with a letter denoting type and after that the value.
+
+   Set Font response:
+
+      'FXXY\n' where XX is the ID and Y is 0/1 for succes and fail
+
+   Empty display response:
+
+      'EXXY\n' where XX is the ID and Y is 0/1 for succes and fail
+
+   Draw string response:
+
+      'WXXY\n' where XX is the ID and Y is 0/1 for succes and fail
+
+   Free memory response:
+      'MXX..X\n:' where XX is amount of free memory
+
+   Get SerialId response: 
+      'SXX..X\n:' where XX is the serial id
+
+Device   | Lines needed | Pin
+--------------------------------------------
+BME280   | 2            | i2c
+SSD1315  | 2            | A0 
+HX711    | 2            | A2
+HX711    | 2            | A6
+DS18B20  | 1            | D2
+DS18B20  | 1            | D3
+
+Device names:
+
+Analog:  A0, A2, A6,
+Digital: D2, D3, D4, D5, D6, D7
+I2C:     I2
