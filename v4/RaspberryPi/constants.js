@@ -4,7 +4,8 @@ module.exports = {
         BME280: 1,
         HX711: 2,
         DS18B20: 3,
-        AUDIO: 4
+        AUDIO: 4,
+        QMP6988: 5,
     },
 
     PATHS: {

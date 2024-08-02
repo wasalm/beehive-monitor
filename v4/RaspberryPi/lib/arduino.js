@@ -142,6 +142,22 @@ module.exports = class{
         };
     }
 
+    async getQMP6988(id){
+        let idStr = "";
+        if(id < 10)
+            idStr += "0";
+
+        idStr += id;
+
+        let result = await this._sendSerial("G" + idStr, "G" + idStr + "1H");
+        result = result.trim().split(/[GHPT]/g);
+        return {
+            humidity: parseFloat(result[2]),
+            pressure: parseFloat(result[3]),
+            temperature: parseFloat(result[4]),
+        };
+    }
+
     async getHX711(id){
         let idStr = "";
         if(id < 10)

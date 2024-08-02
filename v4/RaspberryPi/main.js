@@ -1,49 +1,47 @@
 #!/usr/bin/env node
 
 /*
- * Libraries
- */
+	* Libraries
+	*/
 const CONSTANTS = require("./constants.js");
 const CONFIG = require("./config.js");
 
-// const AudioClass = require("./lib/audio.js");
+const AudioClass = require("./lib/audio.js");
 const ArduinoClass = require("./lib/arduino.js");
 const Rak811Class = require("./lib/rak811.js");
 
 // const Interface = require("./interface.js");
 
-const {
-	encoder
-} = require('cayenne-lpp');
+const { encoder } = require('cayenne-lpp');
 
 /*
- * Global variables
- */
+	* Global variables
+	*/
 let arduinos = [];
 let rak811 = null;
-// let devices = [];
+let devices = [];
 
-// let times = {
-//     screen: -1,
-//     measurement: -1,
-//     send: -1,
-//     reset: -1
-// };
+let times = {
+    screen: -1,
+    measurement: -1,
+    send: -1,
+    reset: -1
+};
 
 // let currentScreen = 0;
 // let currentSend = 0;
 
 /*
- * Main program
- */
+	* Main program
+	*/
 setup().then(() => {
 	setImmediate(main);
 });
 
 function main() {
-	//     loop().then(() => {
-	//         setImmediate(main);
-	//     });
+	    loop().then(() => {
+	        setImmediate(main);
+	    });
 }
 
 /*
@@ -55,13 +53,41 @@ async function setup() {
 
 	await setupArduino();
 	await setupLora();
-	//     await setupDevices();
+	await setupDevices();
 
-	// times.screen = process.uptime();
-	// times.measurement = process.uptime();
-	// times.send = process.uptime();
-	// times.reset = process.uptime();
+	times.screen = process.uptime();
+	times.measurement = process.uptime();
+	times.send = process.uptime();
+	times.reset = process.uptime();
 }
+
+async function loop() {
+    let now = process.uptime();
+
+//     if (now - times.screen > CONFIG.times.screen) {
+//         await updateScreen();
+//         times.screen = now;
+//     }
+
+    if (now - times.measurement > CONFIG.times.measurement) {
+        await measure();
+        times.measurement = now;
+    }
+
+//     if (now - times.send > CONFIG.times.send) {
+//         await send();
+//         times.send = now;
+//     }
+
+    if (now - times.reset > CONFIG.times.reset) {
+        await reset();
+        times.reset = now;
+    }
+}
+
+/*
+	* Setup functions
+	*/
 
 async function setupArduino() {
 	arduinos = [];
@@ -82,16 +108,15 @@ async function setupArduino() {
 
 	for (let i = 0; i < CONFIG.hardware.arduino.ids.length; i++) {
 		let id = CONFIG.hardware.arduino.ids[i];
-		if(typeof list[id] == "undefined") {
+		if (typeof list[id] == "undefined") {
 			console.log("Arduino not found: resetting.")
 			reset();
 		}
 		arduinos[i] = list[id];
 	}
 
-	console.log(arduinos);
-	//     await arduino.configureSSD1306(0);
-	//     await arduino.writeScreen(0, 2, 2, "Beehive 3.0");
+	await arduinos[0].configureSSD1306(0);
+	await arduinos[0].writeScreen(0, 2, 2, "Beehive 3.0");
 }
 
 async function setupLora() {
@@ -107,142 +132,134 @@ async function setupLora() {
 	await rak811.joinABP();
 }
 
-// async function loop() {
-//     let now = process.uptime();
 
-//     if (now - times.screen > CONFIG.times.screen) {
-//         await updateScreen();
-//         times.screen = now;
-//     }
+async function setupDevices() {
+	for (let i = 0; i < arduinos.length; i++) {
+		//Check for existence of BME280 Sensor
+		try {
+			await arduinos[i].reset();
+			await arduinos[i].configureBME280(1);
 
-//     if (now - times.measurement > CONFIG.times.measurement) {
-//         await measure();
-//         times.measurement = now;
-//     }
+			devices.push({
+				type: CONSTANTS.DEVICES.BME280,
+				port: CONSTANTS.PATHS.I2C,
+				id: 1,
+				arduino: i,
+				caynenneId: 1 + 20 * i,
+				measurements: []
+			});
 
-//     if (now - times.send > CONFIG.times.send) {
-//         await send();
-//         times.send = now;
-//     }
+		} catch (e) {}
 
-//     if (now - times.reset > CONFIG.times.reset) {
-//         await reset();
-//         times.reset = now;
-//     }
-// }
+		try {
+			await arduinos[i].reset();
+			await arduinos[i].configureQMP6988(1);
 
-// /*
-//  * Setup functions
-//  */
+			devices.push({
+				type: CONSTANTS.DEVICES.QMP6988,
+				port: CONSTANTS.PATHS.I2C,
+				id: 1,
+				arduino: i,
+				caynenneId: 1 + 20 * i,
+				measurements: []
+			});
 
-// async function setupDevices() {
-//     //Check for existence of BME280 Sensor
-//     try {
-//         await arduino.configureBME280(1);
+		} catch (e) {}
 
-//         devices.push({
-//             type: CONSTANTS.DEVICES.BME280,
-//             port: CONSTANTS.PATHS.I2C,
-//             id: 1,
-//             measurements: []
-//         });
+		// Digital Pins
+		// Pins 2 - 4 are used for DS18B20 devices
+		for (let id = 2; id <= 4; id++) {
+			try {
+				await arduinos[i].reset();
+				await arduinos[i].configureDS18B20(id, "D" + id);
 
-//     } catch (e) {
-//         console.log("BME280 Not found at I2C");
-//     }
+				devices.push({
+					type: CONSTANTS.DEVICES.DS18B20,
+					port: "D" + id,
+					id: id,
+					arduino: i,
+					caynenneId: id + 20 * i,
+					measurements: []
+				});
+			} catch (e) {}
+		}
 
-//     // Digital Pins
-//     // Pins 2 - 4 are used for DS18B20 devices
-//     for (let id = 2; id <= 4; id++) {
-//         try {
-//             await arduino.reset();
-//             await arduino.configureDS18B20(id, "D" + id);
+		// Pins 5 - 6 are used for HX711 device
+		try {
+			await arduinos[i].reset();
+			await arduinos[i].configureHX711(5, "D5");
 
-//             devices.push({
-//                 type: CONSTANTS.DEVICES.DS18B20,
-//                 port: "D" + id,
-//                 id: id,
-//                 measurements: []
-//             });
+			devices.push({
+				type: CONSTANTS.DEVICES.HX711,
+				port: "D5",
+				id: 5,
+				arduino: i,
+				caynenneId: 5 + 20 * i,
+				measurements: []
+			});
+		} catch (e) {}
 
-//             console.log("DS18B20 found at D" + id);
-//         } catch (e) {
-//             console.log("DS18B20 not found at D" + id);
-//         }
-//     }
+		for (let id = 0; id <= 2; id += 2) {
+			try {
+				await arduinos[i].reset();
+				await arduinos[i].configureHX711(id + 10, "A" + id);
 
-//     // Pins 5 - 6 are used for HX711 device
-//     try {
-//         await arduino.reset();
-//         await arduino.configureHX711(5, "D5");
+				devices.push({
+					type: CONSTANTS.DEVICES.HX711,
+					port: "A" + id,
+					id: id + 10,
+					arduino: i,
+					caynenneId: id + 10 + 20 * i,
+					measurements: []
+				});
+			} catch (e) {}
+		}
+	}
 
-//         devices.push({
-//             type: CONSTANTS.DEVICES.HX711,
-//             port: "D5",
-//             id: 5,
-//             measurements: []
-//         });
+	// Add audio device
+	devices.push({
+		type: CONSTANTS.DEVICES.AUDIO,
+		port: CONFIG.hardware.audio.device,
+		id: 100,
+		caynenneId: 100,
+		object: new AudioClass(CONFIG.hardware.audio.device, CONFIG.hardware.audio.bitRate),
+		measurements: []
+	});
 
-//         console.log("HX711 found at D5");
-//     } catch (e) {
-//         console.log("HX711 not found at D5");
-//     }
+	//Restart arduino and configure devices
+	for (let i = 0; i < arduinos.length; i++) {
+		await arduinos[i].reset();
+	}
 
-//     for (let id = 0; id <= 2; id += 2) {
-//         try {
-//             await arduino.reset();
-//             await arduino.configureHX711(id + 10, "A" + id);
+	await arduinos[0].configureSSD1306(0); // Assume screen is always attached to first device
+	await arduinos[0].configureSwitch(16, "A6"); // Assume switch is always attached to first device
 
-//             devices.push({
-//                 type: CONSTANTS.DEVICES.HX711,
-//                 port: "A" + id,
-//                 id: id + 10,
-//                 measurements: []
-//             });
+    for (let i = 0; i < devices.length; i++) {
+        let device = devices[i];
+        switch (device.type) {
+            case CONSTANTS.DEVICES.BME280:
+                await arduinos[device.arduino].configureBME280(device.id);
+                break;
+            case CONSTANTS.DEVICES.QMP6988:
+                await arduinos[device.arduino].configureQMP6988(device.id);
+                break;
+            case CONSTANTS.DEVICES.HX711:
+                await arduinos[device.arduino].configureHX711(device.id, device.port);
+                break;
+            case CONSTANTS.DEVICES.DS18B20:
+                await arduinos[device.arduino].configureDS18B20(device.id, device.port);
+                break;
+            default:
+            //Ignore
+        }
+    }
 
-//             console.log("HX711 found at A" + id);
-//         } catch (e) {
-//             console.log("HX711 not found at A" + id);
-//         }
-//     }
+	console.log(devices);
+}
 
-//     // Add audio device
-//     devices.push({
-//         type: CONSTANTS.DEVICES.AUDIO,
-//         port: CONFIG.hardware.audio.device,
-//         id: 20,
-//         object: new AudioClass(CONFIG.hardware.audio.device, CONFIG.hardware.audio.bitRate),
-//         measurements: []
-//     });
-
-//     //Restart arduino and configure devices
-//     await arduino.reset();
-//     await arduino.configureSSD1306(0); // Assume screen is always attached
-//     await arduino.configureSwitch(16, "A6"); // Assume switch is always attached
-
-//     for (let i = 0; i < devices.length; i++) {
-//         let device = devices[i];
-//         switch (device.type) {
-//             case CONSTANTS.DEVICES.BME280:
-//                 await arduino.configureBME280(device.id);
-//                 break;
-//             case CONSTANTS.DEVICES.HX711:
-//                 await arduino.configureHX711(device.id, device.port);
-//                 break;
-//             case CONSTANTS.DEVICES.DS18B20:
-//                 await arduino.configureDS18B20(device.id, device.port);
-//                 break;
-//             default:
-//             //Ignore
-//         }
-//     }
-
-//     console.log(devices);
-// }
-
-// /*
-//  * Loops
-//  */
+/*
+	* Loops
+	*/
 
 // async function updateScreen() {
 //     switch (currentScreen) {
@@ -273,33 +290,38 @@ async function setupLora() {
 //     }
 // }
 
-// async function measure() {
-//     if(!(await arduino.getSwitch(16)).value){
-//         //Paused
-//         return;
-//     }
+async function measure() {
+    if(!(await arduinos[0].getSwitch(16)).value){
+        //Paused
+        return;
+    }
 
-//     for (let i = 0; i < devices.length; i++) {
-//         switch (devices[i].type) {
-//             case CONSTANTS.DEVICES.BME280:
-//                 devices[i].measurements.push(await arduino.getBME280(devices[i].id));
-//                 break;
-//             case CONSTANTS.DEVICES.HX711:
-//                 devices[i].measurements.push(await arduino.getHX711(devices[i].id));
-//                 break;
-//             case CONSTANTS.DEVICES.DS18B20:
-//                 devices[i].measurements.push(await arduino.getDS18B20(devices[i].id));
-//                 break;
-//             case CONSTANTS.DEVICES.AUDIO:
-//                 devices[i].measurements.push(await devices[i].object.getSample(CONFIG.hardware.audio.duration));
-//                 break;
-//             default:
-//             //Ignore
-//         }
+    for (let i = 0; i < devices.length; i++) {
+        switch (devices[i].type) {
+            case CONSTANTS.DEVICES.BME280:
+                devices[i].measurements.push(await arduinos[devices[i].arduino].getBME280(devices[i].id));
+                break;
+            case CONSTANTS.DEVICES.QMP6988:
+                devices[i].measurements.push(await arduinos[devices[i].arduino].getQMP6988(devices[i].id));
+                break;
+            case CONSTANTS.DEVICES.HX711:
+                devices[i].measurements.push(await arduinos[devices[i].arduino].getHX711(devices[i].id));
+                break;
+            case CONSTANTS.DEVICES.DS18B20:
+                devices[i].measurements.push(await arduinos[devices[i].arduino].getDS18B20(devices[i].id));
+                break;
+            case CONSTANTS.DEVICES.AUDIO:
+                devices[i].measurements.push(await devices[i].object.getSample(CONFIG.hardware.audio.duration));
+                break;
+            default:
+            //Ignore
+        }
 
-//         global.gc();
-//     }
-// }
+        global.gc();
+
+        console.log(devices[i].measurements)
+    }
+}
 
 // async function send() {
 //     let result = [];
