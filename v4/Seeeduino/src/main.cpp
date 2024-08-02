@@ -32,7 +32,7 @@ int freeMemory()
 #include <U8g2lib.h>
 
 //HX711
-#include <HX711.h>
+#include "HX711.h"
 
 //DS18B20
 #include <OneWire.h>
