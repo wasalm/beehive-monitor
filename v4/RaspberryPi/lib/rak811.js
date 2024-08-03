@@ -44,7 +44,6 @@ module.exports = class{
                         return;
                     }
 
-                    console.log(">" . line);
                     if(line.startsWith(ignoreResponses[i])) {
                         //Ignore message
                         return;

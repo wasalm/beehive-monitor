@@ -78,6 +78,14 @@ Install with the command
 	sudo systemctl enable ~/beehive/beehive.service
 	sudo systemctl start ~/beehive/beehive.service
 
+# Volume settings
+
+	alsamixer
+
+Set volume of all devices to 75%
+
+	sudo alsactl store
+
 ## Writeprotect SD card
 First enable overlay in `rpi-config`.
 Secondly, see https://github.com/BertoldVdb/sdtool to protect the sd card properly.

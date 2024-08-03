@@ -10,9 +10,11 @@ const AudioClass = require("./lib/audio.js");
 const ArduinoClass = require("./lib/arduino.js");
 const Rak811Class = require("./lib/rak811.js");
 
-// const Interface = require("./interface.js");
+const Interface = require("./interface.js");
 
-const { encoder } = require('cayenne-lpp');
+const {
+	encoder
+} = require('cayenne-lpp');
 
 /*
 	* Global variables
@@ -22,14 +24,15 @@ let rak811 = null;
 let devices = [];
 
 let times = {
-    screen: -1,
-    measurement: -1,
-    send: -1,
-    reset: -1
+	screen: -1,
+	measurement: -1,
+	send: -1,
+	reset: -1
 };
 
-// let currentScreen = 0;
-// let currentSend = 0;
+let currentScreen = 0;
+let currentArduinoOnScreen = 0;
+let currentSend = 0;
 
 /*
 	* Main program
@@ -39,9 +42,9 @@ setup().then(() => {
 });
 
 function main() {
-	    loop().then(() => {
-	        setImmediate(main);
-	    });
+	loop().then(() => {
+		setImmediate(main);
+	});
 }
 
 /*
@@ -53,6 +56,8 @@ async function setup() {
 
 	await setupArduino();
 	await setupLora();
+
+	await arduinos[0].writeScreen(0, 0, 4, " Scan  sensors ");
 	await setupDevices();
 
 	times.screen = process.uptime();
@@ -62,27 +67,26 @@ async function setup() {
 }
 
 async function loop() {
-    let now = process.uptime();
+	let now = process.uptime();
 
-//     if (now - times.screen > CONFIG.times.screen) {
-//         await updateScreen();
-//         times.screen = now;
-//     }
+	if (now - times.screen > CONFIG.times.screen) {
+		await updateScreen();
+		times.screen = now;
+	}
+	if (now - times.measurement > CONFIG.times.measurement) {
+		await measure();
+		times.measurement = now;
+	}
 
-    if (now - times.measurement > CONFIG.times.measurement) {
-        await measure();
-        times.measurement = now;
-    }
+	if (now - times.send > CONFIG.times.send) {
+		await send();
+		times.send = now;
+	}
 
-//     if (now - times.send > CONFIG.times.send) {
-//         await send();
-//         times.send = now;
-//     }
-
-    if (now - times.reset > CONFIG.times.reset) {
-        await reset();
-        times.reset = now;
-    }
+	if (now - times.reset > CONFIG.times.reset) {
+		await reset();
+		times.reset = now;
+	}
 }
 
 /*
@@ -117,6 +121,7 @@ async function setupArduino() {
 
 	await arduinos[0].configureSSD1306(0);
 	await arduinos[0].writeScreen(0, 2, 2, "Beehive 3.0");
+	await arduinos[0].writeScreen(0, 2, 4, "  Booting  ");
 }
 
 async function setupLora() {
@@ -234,176 +239,192 @@ async function setupDevices() {
 	await arduinos[0].configureSSD1306(0); // Assume screen is always attached to first device
 	await arduinos[0].configureSwitch(16, "A6"); // Assume switch is always attached to first device
 
-    for (let i = 0; i < devices.length; i++) {
-        let device = devices[i];
-        switch (device.type) {
-            case CONSTANTS.DEVICES.BME280:
-                await arduinos[device.arduino].configureBME280(device.id);
-                break;
-            case CONSTANTS.DEVICES.QMP6988:
-                await arduinos[device.arduino].configureQMP6988(device.id);
-                break;
-            case CONSTANTS.DEVICES.HX711:
-                await arduinos[device.arduino].configureHX711(device.id, device.port);
-                break;
-            case CONSTANTS.DEVICES.DS18B20:
-                await arduinos[device.arduino].configureDS18B20(device.id, device.port);
-                break;
-            default:
-            //Ignore
-        }
-    }
-
-	console.log(devices);
+	for (let i = 0; i < devices.length; i++) {
+		let device = devices[i];
+		switch (device.type) {
+			case CONSTANTS.DEVICES.BME280:
+				await arduinos[device.arduino].configureBME280(device.id);
+				break;
+			case CONSTANTS.DEVICES.QMP6988:
+				await arduinos[device.arduino].configureQMP6988(device.id);
+				break;
+			case CONSTANTS.DEVICES.HX711:
+				await arduinos[device.arduino].configureHX711(device.id, device.port);
+				break;
+			case CONSTANTS.DEVICES.DS18B20:
+				await arduinos[device.arduino].configureDS18B20(device.id, device.port);
+				break;
+			default:
+				//Ignore
+		}
+	}
 }
 
 /*
 	* Loops
 	*/
 
-// async function updateScreen() {
-//     switch (currentScreen) {
-//         case 0:
-//             await Interface.displayLoraInfo(arduino, 0, CONFIG.times.send - (process.uptime() - times.send));
-//             break;
-//         case 1: // BME280
-//             await Interface.displayWeatherInfo(arduino, 0, devices);
-//             break;
-//         case 2: // HX711
-//             await Interface.displayWeights(arduino, 0, devices);
-//             break;
-//         case 3: // DS18B20
-//             await Interface.displayTemperatures(arduino, 0, devices);
-//             break;
-//         case 4: //Audio;
-//             await Interface.displayAudioInfo(arduino, 0, devices);
-//             break;
-//     }
+async function updateScreen() {
+	switch (currentScreen) {
+		case 0:
+			await Interface.displayLoraInfo(arduinos[0], 0, CONFIG.times.send - (process.uptime() - times.send));
+			currentScreen++;
+			break;
+		case 1: // BME280 or QMP6988
+			await Interface.displayWeatherInfo(arduinos[0], 0, devices);
+			currentScreen++;
+			break;
+		case 2: // HX711
+            await Interface.displayWeights(arduinos[0], 0, currentArduinoOnScreen, devices);
+			currentArduinoOnScreen ++;
 
-//     if(!(await arduino.getSwitch(16)).value){
-//         await Interface.displayPause(arduino, 0);
-//     }
+			if(currentArduinoOnScreen >= arduinos.length) {
+				currentArduinoOnScreen = 0;
+				currentScreen++;
+			}			
+			break;
+		case 3: // DS18B20
+            await Interface.displayTemperatures(arduinos[0], 0, currentArduinoOnScreen, devices);
+			currentArduinoOnScreen ++;
 
-//     currentScreen++;
-//     if (currentScreen > 4) {
-//         currentScreen = 0;
-//     }
-// }
+			if(currentArduinoOnScreen >= arduinos.length) {
+				currentArduinoOnScreen = 0;
+				currentScreen++;
+			}			
+			break;
+		case 4: //Audio;
+			await Interface.displayAudioInfo(arduinos[0], 0, devices);
+			currentScreen = 0;
+			break;
+	}
 
-async function measure() {
-    if(!(await arduinos[0].getSwitch(16)).value){
-        //Paused
-        return;
-    }
-
-    for (let i = 0; i < devices.length; i++) {
-        switch (devices[i].type) {
-            case CONSTANTS.DEVICES.BME280:
-                devices[i].measurements.push(await arduinos[devices[i].arduino].getBME280(devices[i].id));
-                break;
-            case CONSTANTS.DEVICES.QMP6988:
-                devices[i].measurements.push(await arduinos[devices[i].arduino].getQMP6988(devices[i].id));
-                break;
-            case CONSTANTS.DEVICES.HX711:
-                devices[i].measurements.push(await arduinos[devices[i].arduino].getHX711(devices[i].id));
-                break;
-            case CONSTANTS.DEVICES.DS18B20:
-                devices[i].measurements.push(await arduinos[devices[i].arduino].getDS18B20(devices[i].id));
-                break;
-            case CONSTANTS.DEVICES.AUDIO:
-                devices[i].measurements.push(await devices[i].object.getSample(CONFIG.hardware.audio.duration));
-                break;
-            default:
-            //Ignore
-        }
-
-        global.gc();
-
-        console.log(devices[i].measurements)
-    }
+	if (!(await arduinos[0].getSwitch(16)).value) {
+		await Interface.displayPause(arduinos[0], 0);
+	}
 }
 
-// async function send() {
-//     let result = [];
+async function measure() {
+	if (!(await arduinos[0].getSwitch(16)).value) {
+		//Paused
+		return;
+	}
 
-//     let average;
-//     if (currentSend == 0) {
-//         for (let i = 0; i < devices.length; i++) {
-//             switch (devices[i].type) {
-//                 case CONSTANTS.DEVICES.BME280:
-//                     average = getAverage(devices[i].measurements);
-//                     if (average !== null) {
+	for (let i = 0; i < devices.length; i++) {
+		switch (devices[i].type) {
+			case CONSTANTS.DEVICES.BME280:
+				devices[i].measurements.push(await arduinos[devices[i].arduino].getBME280(devices[i].id));
+				break;
+			case CONSTANTS.DEVICES.QMP6988:
+				devices[i].measurements.push(await arduinos[devices[i].arduino].getQMP6988(devices[i].id));
+				break;
+			case CONSTANTS.DEVICES.HX711:
+				devices[i].measurements.push(await arduinos[devices[i].arduino].getHX711(devices[i].id));
+				break;
+			case CONSTANTS.DEVICES.DS18B20:
+				devices[i].measurements.push(await arduinos[devices[i].arduino].getDS18B20(devices[i].id));
+				break;
+			case CONSTANTS.DEVICES.AUDIO:
+				devices[i].measurements.push(await devices[i].object.getSample(CONFIG.hardware.audio.duration));
 
-//                         /* 
-//                          * BUGFIX: new ENV module gives garbled humidity and/or pressure data. Hence ignore.
-//                          */
-//                         //result.push(encoder.encodeRelativeHumidity(devices[i].id, average.humidity));
-//                         //result.push(encoder.encodeBarometricPressure(devices[i].id, average.pressure / 100)); //Pa -> hPa
-//                         result.push(encoder.encodeTemperature(devices[i].id, average.temperature));
+				console.log(devices[i].measurements);
+				break;
+			default:
+				//Ignore
+		}
 
-//                         let lastVal = devices[i].measurements.pop();
-//                         devices[i].measurements = [lastVal];
-//                     }
+		global.gc();
+	}
+}
 
-//                     break;
-//                 // encodeAnalogOutput
-//                 case CONSTANTS.DEVICES.HX711:
-//                     average = getAverage(devices[i].measurements);
-//                     if (average !== null) {
+async function send() {
+	let result = [];
 
-//                         result.push(encoder.encodeAnalogOutput(devices[i].id, average.weight / 10000));
+	let average;
+	if (currentSend == 0) {
+		for (let i = 0; i < devices.length; i++) {
+			switch (devices[i].type) {
+				case CONSTANTS.DEVICES.QMP6988:
+					average = getAverage(devices[i].measurements);
+					if (average !== null) {
 
-//                         let lastVal = devices[i].measurements.pop();
-//                         devices[i].measurements = [lastVal];
-//                     }
-//                     break;
-//                 case CONSTANTS.DEVICES.DS18B20:
-//                     average = getAverage(devices[i].measurements);
-//                     if (average !== null) {
+						/* 
+							* BUGFIX: new ENV module gives garbled humidity and/or pressure data. Hence ignore.
+							*/
+						result.push(encoder.encodeTemperature(devices[i].caynenneId, average.temperature));
 
-//                         result.push(encoder.encodeTemperature(devices[i].id, average.temperature));
+						let lastVal = devices[i].measurements.pop();
+						devices[i].measurements = [lastVal];
+					}
 
-//                         let lastVal = devices[i].measurements.pop();
-//                         devices[i].measurements = [lastVal];
-//                     }
-//                     break;
-//                 default:
-//                 //Ignore
-//             }
+					break;
+				case CONSTANTS.DEVICES.BME280:
+					average = getAverage(devices[i].measurements);
+					if (average !== null) {
+						result.push(encoder.encodeRelativeHumidity(devices[i].caynenneId, average.humidity));
+						result.push(encoder.encodeBarometricPressure(devices[i].caynenneId, average.pressure / 100)); //Pa -> hPa
+						result.push(encoder.encodeTemperature(devices[i].caynenneId, average.temperature));
 
-//         }
-//     } else {
-//         for (let i = 0; i < devices.length; i++) {
-//             switch (devices[i].type) {
-//                 case CONSTANTS.DEVICES.AUDIO:
-//                     average = getAverage(devices[i].measurements);
-//                     if (average !== null) {
-//                         average = Object.values(average);
-//                         for (let j = 0; j < average.length; j++) {
-//                             result.push(encoder.encodeAnalogInput(devices[i].id + j, average[j]));
-//                         }
+						let lastVal = devices[i].measurements.pop();
+						devices[i].measurements = [lastVal];
+					}
 
-//                         let lastVal = devices[i].measurements.pop();
-//                         devices[i].measurements = [lastVal];
-//                     }
-//                     break;
-//                 default:
-//                 //Ignore
-//             }
-//         }
-//     }
+					break;
+				case CONSTANTS.DEVICES.HX711:
+					average = getAverage(devices[i].measurements);
+					if (average !== null) {
 
-//     if (result.length != 0) {
-//         result = Buffer.concat(result);
-//         //Send data
-//         console.log("SEND DATA with length " + result.length);
-//         // console.log(result);
-//         await rak811.send(result, 1, false);
-//     }
+						result.push(encoder.encodeAnalogOutput(devices[i].caynenneId, average.weight / 10000));
 
-//     //send two different kinds of data
-//     currentSend = 1 - currentSend;
-// }
+						let lastVal = devices[i].measurements.pop();
+						devices[i].measurements = [lastVal];
+					}
+					break;
+				case CONSTANTS.DEVICES.DS18B20:
+					average = getAverage(devices[i].measurements);
+					if (average !== null) {
+
+						result.push(encoder.encodeTemperature(devices[i].caynenneId, average.temperature));
+
+						let lastVal = devices[i].measurements.pop();
+						devices[i].measurements = [lastVal];
+					}
+					break;
+				default:
+					//Ignore
+			}
+
+		}
+	} else {
+		for (let i = 0; i < devices.length; i++) {
+			switch (devices[i].type) {
+				case CONSTANTS.DEVICES.AUDIO:
+					average = getAverage(devices[i].measurements);
+					if (average !== null) {
+						average = Object.values(average);
+						for (let j = 0; j < average.length; j++) {
+							result.push(encoder.encodeAnalogInput(devices[i].caynenneId + j, average[j]));
+						}
+
+						let lastVal = devices[i].measurements.pop();
+						devices[i].measurements = [lastVal];
+					}
+					break;
+				default:
+					//Ignore
+			}
+		}
+	}
+
+	if (result.length != 0) {
+		result = Buffer.concat(result);
+		//Send data
+		console.log("SEND DATA with length " + result.length);
+		await rak811.send(result, 1, false);
+	}
+
+	//send two different kinds of data
+	currentSend = 1 - currentSend;
+}
 
 async function reset() {
 	// Assume Watchdog will restart
@@ -416,24 +437,24 @@ function sleep(ms) {
 	});
 }
 
-// function getAverage(data) {
-//     if (data.length <= 1) {
-//         return null;
-//     }
+function getAverage(data) {
+	if (data.length <= 1) {
+		return null;
+	}
 
-//     let result = Object.assign({}, data[0]);
-//     let keys = Object.keys(result);
+	let result = Object.assign({}, data[0]);
+	let keys = Object.keys(result);
 
-//     for (let i = 0; i < keys.length; i++) {
-//         let key = keys[i];
-//         result[key] = 0;
+	for (let i = 0; i < keys.length; i++) {
+		let key = keys[i];
+		result[key] = 0;
 
-//         for (let j = 0; j < data.length - 1; j++) {
-//             result[key] += data[j][key];
-//         }
+		for (let j = 0; j < data.length - 1; j++) {
+			result[key] += data[j][key];
+		}
 
-//         result[key] /= (data.length - 1);
-//     }
+		result[key] /= (data.length - 1);
+	}
 
-//     return result;
-// }
+	return result;
+}
