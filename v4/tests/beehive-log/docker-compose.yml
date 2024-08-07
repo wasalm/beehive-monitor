@@ -1,0 +1,7 @@
+services:
+  beep:
+    build: ./proxy-server
+    restart: unless-stopped
+    volumes:
+      - ./config.js:/usr/app/config.js
+      - ./data.txt:/usr/app/data.txt
